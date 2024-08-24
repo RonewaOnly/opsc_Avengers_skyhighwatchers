@@ -59,6 +59,9 @@ android {
 dependencies {
     implementation(libs.androidx.media3.common)
     implementation(libs.androidx.media3.exoplayer)
+    implementation(libs.androidx.appcompat)
+    implementation(libs.material)
+    implementation(libs.androidx.activity)
     //camera
     val camerax_version = "1.2.2"
     implementation ("androidx.camera:camera-core:${camerax_version}")
@@ -88,6 +91,9 @@ dependencies {
     implementation("com.facebook.android:facebook-login:11.2.0")
     //processing images
     implementation( "io.coil-kt:coil-compose:2.4.0")
+
+    //splash screen api
+    implementation("androidx.core:core-splashscreen:1.0.1")
 
 
     implementation(libs.androidx.core.ktx)
