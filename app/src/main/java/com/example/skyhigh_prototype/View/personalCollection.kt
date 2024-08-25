@@ -5,6 +5,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -29,6 +30,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.example.skyhigh_prototype.Model.CameraApp
+//import com.example.skyhigh_prototype.CameraApp
 import com.example.skyhigh_prototype.R
 import com.google.firebase.Timestamp
 
@@ -193,67 +195,70 @@ fun EditCard(card_id: String, card_details: List<BirdTip>) {
 
     card_details.forEach { tip ->
         if (tip.card_id == card_id) {
-            Column(
-                modifier = Modifier.fillMaxHeight().background(Color.White).padding(top=60.dp)
+            LazyColumn(
+                modifier = Modifier.height(500.dp).background(Color.White).padding(top=60.dp)
             ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(30.dp)
-                        .background(Color.Red, RectangleShape),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Absolute.SpaceBetween
-                ) {
-                    IconButton(onClick = { /* TODO: Handle back navigation */ }) {
-                        Icon(imageVector = Icons.Filled.KeyboardArrowLeft, contentDescription = null)
+                item {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(30.dp)
+                            .background(Color.Red, RectangleShape),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Absolute.SpaceBetween
+                    ) {
+                        IconButton(onClick = { /* TODO: Handle back navigation */ }) {
+                            Icon(imageVector = Icons.Filled.KeyboardArrowLeft, contentDescription = null)
+                        }
+                        Text(text = tip.card_name)
+                        IconButton(onClick = {  }) {
+                            Icon(imageVector = Icons.Filled.MoreVert, contentDescription = null)
+                        }
                     }
-                    Text(text = tip.card_name)
-                    IconButton(onClick = {  }) {
-                        Icon(imageVector = Icons.Filled.MoreVert, contentDescription = null)
-                    }
-                }
 
-                TextField(value = "", onValueChange = {}, label = { Text(text = "Enter bird's name") })
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(Color.LightGray)
-                ) {
-                    LazyRow {
-                        item {
-                            if (enabled) {
-                                InputChip(
-                                    onClick = { enabled = !enabled },
-                                    label = { Text("hi") },
-                                    selected = enabled,
-                                    trailingIcon = {
-                                        Icon(
-                                            Icons.Default.Close,
-                                            contentDescription = "Localized description",
-                                            Modifier.size(InputChipDefaults.AvatarSize)
-                                        )
-                                    },
-                                )
+                    TextField(value = "", onValueChange = {}, label = { Text(text = "Enter bird's name") })
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(Color.LightGray)
+                    ) {
+                        LazyRow {
+                            item {
+                                if (enabled) {
+                                    InputChip(
+                                        onClick = { enabled = !enabled },
+                                        label = { Text("hi") },
+                                        selected = enabled,
+                                        trailingIcon = {
+                                            Icon(
+                                                Icons.Default.Close,
+                                                contentDescription = "Localized description",
+                                                Modifier.size(InputChipDefaults.AvatarSize)
+                                            )
+                                        },
+                                    )
+                                }
                             }
                         }
                     }
+                    TextField(value = "", onValueChange = {}, label = { Text(text = "Enter bird description.") })
+                    bird_found.LATITUDE = "54°45′N"
+                    bird_found.LONGITUDE = "55°58′E"
+                    Text(text = "LATITUDE: ${bird_found.LATITUDE}, LONGITUDE: ${bird_found.LONGITUDE}")
+                    Button(onClick = { mediaButton = true }) {
+                        Text(text = "Media button")
+                    }
+                    if (mediaButton) {
+                        CameraApp()
+                    }
+
+                    Button(onClick = { /* TODO: Handle save */ }) {
+                        Text(text = "Save")
+                    }
                 }
-                TextField(value = "", onValueChange = {}, label = { Text(text = "Enter bird description.") })
-                bird_found.LATITUDE = "54°45′N"
-                bird_found.LONGITUDE = "55°58′E"
-                Text(text = "LATITUDE: ${bird_found.LATITUDE}, LONGITUDE: ${bird_found.LONGITUDE}")
-                Button(onClick = { mediaButton = true }) {
-                    Text(text = "Media button")
-                }
-                if (mediaButton) {
-                    CameraApp()
                 }
 
-                Button(onClick = { /* TODO: Handle save */ }) {
-                    Text(text = "Save")
-                }
-            }
-        } else {
+        }else {
             Text(text = "No information found")
         }
     }
