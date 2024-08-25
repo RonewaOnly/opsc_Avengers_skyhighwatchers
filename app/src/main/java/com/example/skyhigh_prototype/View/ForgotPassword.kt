@@ -1,5 +1,6 @@
-package com.example.skyhigh_prototype.View
+@file:Suppress("PackageName")
 
+package com.example.skyhigh_prototype.View
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column

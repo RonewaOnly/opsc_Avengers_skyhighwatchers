@@ -59,11 +59,8 @@ android {
 dependencies {
     implementation(libs.androidx.media3.common)
     implementation(libs.androidx.media3.exoplayer)
-    runtimeOnly("com.google.accompanist:accompanist-pager:0.34.0")
-    runtimeOnly("androidx.media3:media3-transformer:1.3.0")
-
     //camera
-    val camerax_version = "1.2.3"
+    val camerax_version = "1.2.2"
     implementation ("androidx.camera:camera-core:${camerax_version}")
     implementation ("androidx.camera:camera-camera2:${camerax_version}")
     implementation ("androidx.camera:camera-lifecycle:${camerax_version}")
@@ -74,9 +71,7 @@ dependencies {
     implementation ("com.google.accompanist:accompanist-permissions:0.31.0-alpha")
     implementation("com.google.android.exoplayer:exoplayer:2.19.1")
     implementation ("androidx.camera:camera-video:1.1.0-alpha01")
-    implementation("androidx.media3:media3-exoplayer:1.4.0")
-    implementation("androidx.media3:media3-exoplayer-dash:1.4.0")
-    implementation("androidx.media3:media3-ui:1.4.0")
+
     implementation ("androidx.camera:camera-video:1.3.2")
     //Retrofit
     implementation ("com.squareup.retrofit2:retrofit:2.9.0")

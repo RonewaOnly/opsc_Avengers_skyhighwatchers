@@ -1,5 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
+    <!--splash screen theme -->
+    <style name="Theme.MySplashScreen" parent="Theme.SplashScreen">
+
+        <item name="windowSplashScreenBackground">@color/gray_blue</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_launcher_background</item>
+        <item name="postSplashScreenTheme">@style/Theme.SkyHigh_prototype</item>
+
+    </style>
     <style name="Theme.SkyHigh_prototype" parent="android:Theme.Material.Light.NoActionBar" />
 </resources>
