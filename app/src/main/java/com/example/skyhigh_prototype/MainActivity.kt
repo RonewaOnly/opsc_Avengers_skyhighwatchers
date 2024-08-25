@@ -62,7 +62,7 @@ fun SkyHigh(){
         composable("register"){
             Register(rememberNav)
         }
-        composable("com.example.skyhigh_prototype.View.ForgotPassword"){
+        composable("forgotPassword"){
             ForgotPassword(rememberNav)
         }
         composable("homepage"){
@@ -72,6 +72,9 @@ fun SkyHigh(){
     }
 }
 
+
+
+//Composable function for splash screen
 @Composable
 fun SplashScreen(navController: NavController){
 
@@ -85,10 +88,10 @@ fun SplashScreen(navController: NavController){
         //animation effect for logo image
         AnimatedLogo()
 
-        // Navigate to Onboarding after a delay
+        // Navigate to next screen after a delay
         LaunchedEffect(key1 = true) {
             delay(5000L)
-            navController.navigate("main_screen") {
+            navController.navigate("sky_high") {
                 popUpTo("splash") { inclusive = true }
             }
         }
@@ -96,15 +99,17 @@ fun SplashScreen(navController: NavController){
     }
 }
 
+//composable function for navigation between splash and main login screen
 @Composable
 fun MyAppNavHost(navController: NavHostController) {
 
     NavHost(navController = navController, startDestination = "splash_screen") {
         composable("splash_screen") { SplashScreen(navController) }
-        composable("main_screen") { SkyHigh() }
+        composable("sky_high") { SkyHigh() }
     }
 }
 
+//composable function for animating logo image
 @Composable
 fun AnimatedLogo() {
 
@@ -117,7 +122,7 @@ fun AnimatedLogo() {
     // In phase 1, the logo fades to 50% opacity.
     // In phase 2, the logo returns to full opacity.
     val alpha = animateFloatAsState(
-        targetValue = if (animationPhase == 1) 0.5f else 1f,
+        targetValue = if (animationPhase == 1) 5f else 1f,
         animationSpec = tween(durationMillis = 2500), label = ""
     )
 
@@ -125,7 +130,7 @@ fun AnimatedLogo() {
     // In phase 1, the logo scales to 1.5x its original size.
     // In phase 2, it returns to its original size.
     val scale = animateFloatAsState(
-        targetValue = if (animationPhase == 1) 1.5f else 1f,
+        targetValue = if (animationPhase == 1) 2f else 1f,
         animationSpec = tween(durationMillis = 2500), label = ""
     )
 
@@ -133,13 +138,13 @@ fun AnimatedLogo() {
     // In phase 1, the logo moves 100 pixels downwards.
     // In phase 2, it moves back to its original position.
     val translationY = animateFloatAsState(
-        targetValue = if (animationPhase == 1) 250f else 0f,
+        targetValue = if (animationPhase == 1) 5f else 0f,
         animationSpec = tween(durationMillis = 2500), label = ""
     )
 
-    // Apply these values to the Image
+    // Apply animation  values to the logo image
     Image(
-        painter = painterResource(id = R.drawable.logo),
+        painter = painterResource(id = R.drawable.sky_high_watchers_logo),
         contentDescription = "Animated Logo",
         modifier = Modifier
             .size(250.dp)
