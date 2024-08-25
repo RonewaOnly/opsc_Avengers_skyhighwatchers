@@ -1,3 +1,5 @@
+@file:Suppress("PackageName")
+
 package com.example.skyhigh_prototype.Model
 
 import android.Manifest
@@ -52,12 +54,12 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
-import androidx.media3.ui.PlayerView
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import coil.compose.rememberImagePainter
+import com.google.android.exoplayer2.ui.PlayerView
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -327,12 +329,7 @@ fun VideoPlayerScreen(videoUri: Uri, navController: NavHostController) {
     }
 
     DisposableEffect(
-        AndroidView(factory = {
-            PlayerView(context).apply {
-                player = exoPlayer as Player?
-                useController = true
-            }
-        }, modifier = Modifier.fillMaxSize())
+        kotlin.Unit
     ) {
         onDispose { exoPlayer.release() }
     }

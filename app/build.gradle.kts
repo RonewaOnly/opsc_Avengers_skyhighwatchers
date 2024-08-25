@@ -88,6 +88,8 @@ dependencies {
     implementation("com.facebook.android:facebook-login:11.2.0")
     //processing images
     implementation( "io.coil-kt:coil-compose:2.4.0")
+    // Splash screen API
+    implementation("androidx.core:core-splashscreen:1.0.1")
 
 
     implementation(libs.androidx.core.ktx)
