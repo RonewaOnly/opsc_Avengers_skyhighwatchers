@@ -71,6 +71,7 @@ fun Login(navController: NavController) {
             .background(Color.White)
     ) {
 
+        //first box contains logo image
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -99,7 +100,7 @@ fun Login(navController: NavController) {
         )
         Spacer(modifier = Modifier.height(20.dp))
 
-        // 70% height remaining
+        // box 2
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -107,17 +108,16 @@ fun Login(navController: NavController) {
                 .background(Color.White)
         ) {
 
+            //email input remaining
             OutlinedTextField(value = username, onValueChange = { username = it }, label = {
                 Text(text = "Email")
             },
-
                 modifier = Modifier
                     .width(400.dp)
                     .padding(10.dp, 0.dp)
             )
 
-
-
+            //password input field
             OutlinedTextField(value = password,
                 onValueChange = { password = it },
                 label = {
