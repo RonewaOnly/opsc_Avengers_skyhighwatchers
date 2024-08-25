@@ -24,9 +24,9 @@ import androidx.compose.material3.ButtonDefaults.buttonColors
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -40,6 +40,7 @@ import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -49,6 +50,7 @@ import com.example.skyhigh_prototype.R
 @Composable
 fun Login(navController: NavController) {
 
+    //variables
     var username by remember {
         mutableStateOf("")
     }
@@ -59,7 +61,10 @@ fun Login(navController: NavController) {
         mutableStateOf(false)
     }
 
+    // State to track whether the password is visible
+    var passwordVisible by remember { mutableStateOf(false) }
 
+    //column for page
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -69,7 +74,7 @@ fun Login(navController: NavController) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .weight(0.2f)
+                .weight(0.25f)
                 .background(Color.LightGray)
         ) {
             Spacer(modifier = Modifier.width(10.dp))
@@ -102,39 +107,44 @@ fun Login(navController: NavController) {
                 .background(Color.White)
         ) {
 
-            TextField(
-                value = username,
-                onValueChange = { username = it },
-                label = {
-                    Text(text = "Email")
-                },
+            OutlinedTextField(value = username, onValueChange = { username = it }, label = {
+                Text(text = "Email")
+            },
 
                 modifier = Modifier
                     .width(400.dp)
                     .padding(10.dp, 0.dp)
             )
 
-            TextField(
-                value = password,
+
+
+            OutlinedTextField(value = password,
                 onValueChange = { password = it },
                 label = {
                     Text(text = "Password")
                 },
-
                 trailingIcon = {
-                    Icon(
-                        painter = painterResource(id = R.drawable.baseline_remove_red_eye_24),
-                        contentDescription = null,
-                        modifier = Modifier.clickable {
+                    val image = if (passwordVisible) {
 
-                        }
-                    )
+                        painterResource(id = R.drawable.baseline_remove_red_eye_24)
+
+                    } else {
+
+                        painterResource(id = R.drawable.baseline_remove_red_eye_24)
+                    }
+
+                    Icon(painter = image,
+                        contentDescription = if (passwordVisible) "Hide password" else "Show password",
+                        modifier = Modifier.clickable {
+                            passwordVisible = !passwordVisible
+                        })
                 },
-                visualTransformation = PasswordVisualTransformation(),
+                visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                 modifier = Modifier
                     .width(400.dp)
                     .padding(10.dp, 80.dp)
             )
+
 
             //box for remember me and forgot password
             Box(
@@ -150,11 +160,9 @@ fun Login(navController: NavController) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically // Align checkbox and text vertically center
                     ) {
-                        Checkbox(
-                            modifier = Modifier.padding(10.dp, 0.dp, 0.dp, 0.dp),
+                        Checkbox(modifier = Modifier.padding(10.dp, 0.dp, 0.dp, 0.dp),
                             checked = rememberMe.value,
-                            onCheckedChange = { rememberMe.value = it }
-                        )
+                            onCheckedChange = { rememberMe.value = it })
                         Spacer(modifier = Modifier.width(2.dp)) // Add some space between the checkbox and text
                         Text(text = "Remember Me")
                     }
@@ -260,7 +268,7 @@ fun Login(navController: NavController) {
                     modifier = Modifier.padding(top = 30.dp),
                     horizontalArrangement = Arrangement.Center, // Center buttons horizontally
                     verticalAlignment = Alignment.CenterVertically
-                ){
+                ) {
                     Text(
                         text = "Don't have an account?",
                         fontSize = 18.sp,
