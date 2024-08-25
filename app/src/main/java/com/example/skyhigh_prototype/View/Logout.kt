@@ -35,7 +35,7 @@ fun Logout(navController: NavController){
 
         HorizontalDivider()
         OutlinedButton(onClick = { /*TODO*/ }) {
-            Text(text = "Delete Account")
+            Text(text = "Delete Accounts")
         }
         TextButton(onClick = { /*TODO*/ }) {
             Text(text = "pause account")
