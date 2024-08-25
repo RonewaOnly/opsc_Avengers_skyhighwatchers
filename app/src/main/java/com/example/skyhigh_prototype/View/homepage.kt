@@ -119,6 +119,7 @@ fun Main(){
                     PersonalCollection()
                 }
                 composable("logout"){
+                    Logout(rememberNavController)
                 }
             }
             Spacer(modifier = Modifier.padding(contentPadding))
@@ -199,7 +200,7 @@ fun NavDrawer(navController: NavController){
         Spacer(modifier = Modifier.weight(1f))
 
         HorizontalDivider()
-        OutlinedButton(onClick = { /*TODO*/ },modifier = Modifier
+        OutlinedButton(onClick = { navController.navigate("logout") },modifier = Modifier
             .fillMaxWidth()
             , shape = RectangleShape,
             colors = ButtonColors(containerColor = Color.LightGray, contentColor = Color.White, disabledContainerColor = Color.DarkGray, disabledContentColor = Color.Yellow),

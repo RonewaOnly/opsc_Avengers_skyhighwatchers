@@ -20,36 +20,18 @@ import androidx.camera.video.Recording
 import androidx.camera.video.VideoCapture
 import androidx.camera.video.VideoOutput
 import androidx.camera.video.VideoRecordEvent
-import androidx.camera.video.VideoCapture.Builder
 import androidx.camera.view.PreviewView
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.gestures.detectTransformGestures
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -58,7 +40,6 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.input.pointer.PointerInputChange
-import androidx.compose.ui.input.pointer.PointerInputScope
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -68,22 +49,20 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
 import androidx.media3.common.MediaItem
+import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.ui.PlayerView
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import coil.compose.rememberImagePainter
-import com.google.android.exoplayer2.Player
-import com.google.android.exoplayer2.ui.PlayerView
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.IOException
 
-class CameraHolder {
-}
 @Composable
 fun CameraApp() {
     val navController = rememberNavController()
@@ -115,14 +94,22 @@ fun CameraScreen(navController: NavHostController) {
     var hasCameraPermission by remember { mutableStateOf(false) }
 
     val permissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission(),
-        onResult = { isGranted ->
-            hasCameraPermission = isGranted
+        contract = ActivityResultContracts.RequestMultiplePermissions(),
+        onResult = { permissions ->
+            hasCameraPermission = permissions[Manifest.permission.CAMERA] == true
         }
     )
 
     LaunchedEffect(Unit) {
-        permissionLauncher.launch(Manifest.permission.CAMERA)
+        permissionLauncher.launch(arrayOf(Manifest.permission.CAMERA, Manifest.permission.RECORD_AUDIO))
+    }
+
+    DisposableEffect(Unit) {
+        val cameraProvider = cameraProviderFuture.get()
+        onDispose {
+            // Properly unbind all use cases and clean up resources when this composable leaves the composition
+            cameraProvider.unbindAll()
+        }
     }
 
     if (hasCameraPermission) {
@@ -131,17 +118,19 @@ fun CameraScreen(navController: NavHostController) {
         val preview = Preview.Builder().build()
         val recorder = Recorder.Builder().build()
 
-        cameraProvider.unbindAll()
+        cameraProvider.unbindAll()  // Ensure no conflicting bindings
         imageCapture = ImageCapture.Builder().build()
         videoCapture = VideoCapture.withOutput(recorder)
 
-        cameraProvider.bindToLifecycle(
-            LocalContext.current as ComponentActivity,
-            cameraSelector,
-            preview,
-            imageCapture,
-            videoCapture
-        )
+
+            cameraProvider.bindToLifecycle(
+                LocalContext.current as ComponentActivity,
+                cameraSelector,
+                preview,
+                imageCapture,
+                videoCapture
+            )
+
 
         val previewView = PreviewView(context).apply {
             scaleType = PreviewView.ScaleType.FILL_CENTER
@@ -214,10 +203,10 @@ fun CameraScreen(navController: NavHostController) {
             }
         }
     } else {
-        // Show message if permission is not granted
         Text("Camera permission required")
     }
 }
+
 
 fun createFile(context: android.content.Context, extension: String): File? {
     return try {
@@ -228,7 +217,6 @@ fun createFile(context: android.content.Context, extension: String): File? {
     }
 }
 
-@OptIn(UnstableApi::class)
 @Composable
 fun GalleryScreen(navController: NavHostController) {
     val context = LocalContext.current
@@ -241,11 +229,8 @@ fun GalleryScreen(navController: NavHostController) {
         }
     }
 
-    Column(modifier = Modifier.fillMaxSize()) {
-        Button(onClick = { navController.navigate("camera") }) {
-            Text("Back to Camera")
-        }
-
+    // Ensure LazyColumn has a constrained height
+    Box(modifier = Modifier.fillMaxSize()) {
         LazyColumn(modifier = Modifier.fillMaxSize()) {
             items(mediaFiles) { file ->
                 Row(
@@ -253,9 +238,9 @@ fun GalleryScreen(navController: NavHostController) {
                         .fillMaxWidth()
                         .clickable {
                             if (file.extension == "mp4") {
-                                navController.navigate("video_player/${file.toUri()}")
+                                navController.navigate("video_player/${Uri.encode(file.toUri().toString())}")
                             } else if (file.extension == "jpg") {
-                                navController.navigate("image_detail/${file.toUri()}")
+                                navController.navigate("image_detail/${Uri.encode(file.toUri().toString())}")
                             }
                         }
                         .padding(8.dp)
@@ -304,8 +289,17 @@ fun GalleryScreen(navController: NavHostController) {
                 }
             }
         }
+
+        // Back to camera button
+        Button(
+            onClick = { navController.navigate("camera") },
+            modifier = Modifier.align(Alignment.BottomCenter).padding(16.dp)
+        ) {
+            Text("Back to Camera")
+        }
     }
 }
+
 
 @OptIn(UnstableApi::class)
 suspend fun generateVideoThumbnail(context: android.content.Context, videoFile: File): Bitmap? {
@@ -423,63 +417,38 @@ fun ZoomableImage(
                         zoomState.onDrag(change, dragAmount)
                     }
                 )
-                detectTransformGestures { centroid, pan, zoom, rotation ->
-                    // handle gesture here
-                }
             },
         contentScale = contentScale,
         alignment = alignment
     )
 }
-fun PointerInputScope.detectTransformGestures(
-    onGesture: (centroid: Offset, pan: Offset, zoom: Float, rotation: Float) -> Unit
-){}
 
 class ZoomState(
     var scale: MutableState<Float>,
     var offset: MutableState<Offset>
 ) {
 
-
     private var lastDragOffset = Offset.Zero
 
     fun onTap() {
-        // Reset the zoom level to the initial value
         scale.value = 1f
         offset.value = Offset.Zero
     }
 
     fun onDragStart(start: Offset) {
-        // Save the starting offset
         lastDragOffset = offset.value
     }
 
     fun onDragEnd(end: Offset) {
-        // Calculate the distance dragged
         val dragDistance = end - lastDragOffset
-
-        // Update the offset based on the drag distance
         offset.value += dragDistance
     }
 
     fun onDragCancel() {
-        // Reset the last drag offset
         lastDragOffset = Offset.Zero
     }
 
     fun onDrag(change: PointerInputChange, dragAmount: Offset) {
-        // Update the offset based on the drag amount
         offset.value += dragAmount
     }
-
-    fun onGesture(centroid: Offset, pan: Offset, zoom: Float, rotation: Float) {
-        // Handle the gesture by updating the scale and offset
-        scale.value *= zoom
-        offset.value += pan
-    }
-
-
 }
-
-
-data class Gesture(val scale: Float, val offset: Offset)
