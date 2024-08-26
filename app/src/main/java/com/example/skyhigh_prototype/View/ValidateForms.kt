@@ -79,6 +79,27 @@ class ValidateForms {
             } else {
                 ""
             }
+        }//end
+
+        //function to validate email for login button
+        fun loginEmail(email: String): String{
+
+            return if (email.isEmpty()){
+                "Required"
+            }else{
+                ""
+            }
+        }//end
+
+        //function to validate email for login button
+        fun loginPassword(password: String): String{
+
+            return if (password.isEmpty()){
+                "Required"
+            }else{
+                ""
+            }
         }
+
     }
 }
