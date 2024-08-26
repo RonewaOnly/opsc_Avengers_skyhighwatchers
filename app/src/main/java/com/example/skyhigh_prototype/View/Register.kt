@@ -2,7 +2,6 @@
 
 package com.example.skyhigh_prototype.View
 
-import android.util.Patterns
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -54,66 +53,6 @@ fun Register(navController: NavController) {
     var emailError by remember { mutableStateOf("") }
     var passwordError by remember { mutableStateOf("") }
     var confirmPasswordError by remember { mutableStateOf("") }
-
-    //functions to validate inputs
-    //function to validate names of the user
-    fun validateNames(name: String): Boolean {
-        return if (name.length < 3) {
-            firstnameError = "At least 3 letters"
-            false
-        } else if (name.any { !it.isLetter() }) {
-            firstnameError = "Must contain only letters"
-            false
-        } else {
-            firstnameError = ""
-            true
-        }
-    }
-
-    //function to validate email
-    fun validateEmail(email: String): Boolean {
-        return if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-            emailError = "Invalid email address."
-            false
-        } else {
-            emailError = ""
-            true
-        }
-    }
-
-    //function for validating password
-    fun validatePassword(password: String): Boolean {
-        return if (password.length < 8) {
-            passwordError = "Must contain at least 8 characters long"
-            false
-        } else if (!password.any { it.isDigit() }) {
-            passwordError = "Must contain at least a number"
-            false
-        } else if (!password.any { it.isLowerCase() }) {
-            passwordError = "Must contain at least a lowercase letter"
-            false
-        } else if (!password.any { it.isUpperCase() }) {
-            passwordError = "Must contain at least a uppercase letter"
-            false
-        } else if (!password.any { !it.isLetterOrDigit() }) {
-            passwordError = "Must contain at least special characters"
-            false
-        } else {
-            passwordError = ""
-            true
-        }
-    }
-
-    //function to validate confirm password to check if passwords match
-    fun validateConfirmPassword(password: String, confirmPassword: String): Boolean {
-        return if (password != confirmPassword) {
-            confirmPasswordError = "Passwords do not match."
-            false
-        } else {
-            confirmPasswordError = ""
-            true
-        }
-    }
 
 
     //column for page
@@ -192,6 +131,7 @@ fun Register(navController: NavController) {
                 }
                 //end of first name input layout
                 //-----------
+                Spacer(modifier = Modifier.height(20.dp))
                 //text field for last name
                 OutlinedTextField(
                     value = lastname,
@@ -201,7 +141,7 @@ fun Register(navController: NavController) {
                     placeholder = { Text(text = "Enter Last Name") },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(10.dp, 20.dp),
+                        .padding(10.dp, 0.dp),
                     singleLine = true
                 )
                 if (lastnameError.isNotEmpty()) {
@@ -214,6 +154,7 @@ fun Register(navController: NavController) {
                 }
                 //end of last name text field
                 //-------
+                Spacer(modifier = Modifier.height(20.dp))
                 // Email input field
                 OutlinedTextField(
                     value = email,
@@ -236,6 +177,7 @@ fun Register(navController: NavController) {
                 }
                 //end of text field input for email
                 //-------
+                Spacer(modifier = Modifier.height(20.dp))
                 //text field input for password
                 // Password input field
                 OutlinedTextField(
@@ -259,7 +201,7 @@ fun Register(navController: NavController) {
                     visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(10.dp, 20.dp),
+                        .padding(10.dp, 0.dp),
                     singleLine = true
                 )
                 if (passwordError.isNotEmpty()) {
@@ -272,6 +214,7 @@ fun Register(navController: NavController) {
                 }
                 //end of text filed for password
                 //--------
+                Spacer(modifier = Modifier.height(20.dp))
                 // Confirm password input field
                 OutlinedTextField(
                     value = confirmPassword,
@@ -293,7 +236,7 @@ fun Register(navController: NavController) {
                     visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(10.dp, 10.dp),
+                        .padding(10.dp, 0.dp),
                     singleLine = true
                 )
                 if (confirmPasswordError.isNotEmpty()) {
@@ -311,16 +254,17 @@ fun Register(navController: NavController) {
                 Button(
                     onClick = {
                         // Validate all input fields before proceeding
-                        val isValid =
-                            validateNames(firstname) && validateNames(lastname) && validateEmail(
-                                email
-                            ) && validatePassword(password) && validateConfirmPassword(
-                                password,
-                                confirmPassword
-                            )
+                        firstnameError = ValidateForms.validateFirstName(firstname)
+                        lastnameError = ValidateForms.validateLastName(lastname)
+                        emailError = ValidateForms.validateEmail(email)
+                        passwordError = ValidateForms.validatePassword(password)
+                        confirmPasswordError =
+                            ValidateForms.validateConfirmPassword(password, confirmPassword)
+
 
                         // If all validations pass, navigate to the login screen
-                        if (isValid) {
+                        // If no errors, proceed with registration
+                        if (firstnameError.isEmpty() && lastnameError.isEmpty() && emailError.isEmpty() && passwordError.isEmpty() && confirmPasswordError.isEmpty()) {
                             navController.navigate("login")
                         }
                     },
@@ -331,7 +275,7 @@ fun Register(navController: NavController) {
                         .height(50.dp)
                 ) {
                     Text(text = "Create Account", fontSize = 20.sp)
-                }
+                }//end of button
 
             }
         }
@@ -339,3 +283,4 @@ fun Register(navController: NavController) {
     }//main column
 
 }//end function
+
