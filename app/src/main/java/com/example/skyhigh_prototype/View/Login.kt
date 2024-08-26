@@ -64,6 +64,10 @@ fun Login(navController: NavController) {
     // State to track whether the password is visible
     var passwordVisible by remember { mutableStateOf(false) }
 
+    //Error states
+    var emailError by remember { mutableStateOf("") }
+    var passwordError by remember { mutableStateOf("") }
+
     //column for page
     Column(
         modifier = Modifier
@@ -98,8 +102,7 @@ fun Login(navController: NavController) {
             fontSize = 18.sp,
             modifier = Modifier.padding(20.dp, 0.dp)
         )
-        Spacer(modifier = Modifier.height(20.dp))
-
+        Spacer(modifier = Modifier.height(10.dp))
         // box 2
         Box(
             modifier = Modifier
@@ -108,50 +111,87 @@ fun Login(navController: NavController) {
                 .background(Color.White)
         ) {
 
-            //email input remaining
-            OutlinedTextField(value = username, onValueChange = { username = it }, label = {
-                Text(text = "Email")
-            },
+            //column for input fields
+            Column(
                 modifier = Modifier
-                    .width(400.dp)
-                    .padding(10.dp, 0.dp)
-            )
+                    .fillMaxSize()
+                    .padding(0.dp)
+            ) {
 
-            //password input field
-            OutlinedTextField(value = password,
-                onValueChange = { password = it },
-                label = {
-                    Text(text = "Password")
-                },
-                trailingIcon = {
-                    val image = if (passwordVisible) {
+                //email input remaining
+                OutlinedTextField(
+                    value = username,
+                    onValueChange = { username = it },
+                    label = {
+                        Text(text = "Email")
+                    },
+                    placeholder = { Text(text = "Enter Email") },
+                    isError = emailError.isNotEmpty(),
+                    modifier = Modifier
+                        .width(400.dp)
+                        .padding(10.dp, 0.dp),
+                    singleLine = true
+                )
+                if (emailError.isNotEmpty()) {
+                    Text(
+                        text = emailError,
+                        color = Color.Red,
+                        fontSize = 12.sp,
+                        modifier = Modifier.padding(start = 16.dp, top = 4.dp)
+                    )
+                }//end
 
-                        painterResource(id = R.drawable.baseline_remove_red_eye_24)
+                Spacer(modifier = Modifier.height(10.dp))
+                //password input field
+                OutlinedTextField(
+                    value = password,
+                    onValueChange = { password = it },
+                    label = {
+                        Text(text = "Password")
+                    },
+                    isError = passwordError.isNotEmpty(),
+                    placeholder = { Text(text = "Enter Password") },
+                    trailingIcon = {
+                        val image = if (passwordVisible) {
 
-                    } else {
+                            painterResource(id = R.drawable.baseline_remove_red_eye_24)
 
-                        painterResource(id = R.drawable.baseline_remove_red_eye_24)
-                    }
+                        } else {
 
-                    Icon(painter = image,
-                        contentDescription = if (passwordVisible) "Hide password" else "Show password",
-                        modifier = Modifier.clickable {
-                            passwordVisible = !passwordVisible
-                        })
-                },
-                visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                modifier = Modifier
-                    .width(400.dp)
-                    .padding(10.dp, 80.dp)
-            )
+                            painterResource(id = R.drawable.baseline_remove_red_eye_24)
+                        }
+
+                        Icon(painter = image,
+                            contentDescription = if (passwordVisible) "Hide password" else "Show password",
+                            modifier = Modifier.clickable {
+                                passwordVisible = !passwordVisible
+                            })
+                    },
+                    visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                    modifier = Modifier
+                        .width(400.dp)
+                        .padding(10.dp, 0.dp),
+                    singleLine = true
+                )
+                if (passwordError.isNotEmpty()) {
+                    Text(
+                        text = passwordError,
+                        color = Color.Red,
+                        fontSize = 12.sp,
+                        modifier = Modifier.padding(start = 16.dp, top = 4.dp)
+                    )
+                }//end
+
+            }//end of column
 
 
             //box for remember me and forgot password
             Box(
                 modifier = Modifier
                     .fillMaxWidth() // Make the Box fill the entire width of the screen
-                    .padding(top = 140.dp) // Add top padding to position the elements as needed
+                    .padding(top = 170.dp) // Add top padding to position the elements as needed
             ) {
+
                 Row(
                     modifier = Modifier.fillMaxWidth(), // Make the Row fill the entire width of the Box
                     verticalAlignment = Alignment.CenterVertically, // Align elements vertically center within the Row
@@ -176,12 +216,25 @@ fun Login(navController: NavController) {
                 }
             }//End
 
+            Spacer(modifier = Modifier.height(200.dp))
             //button to login
             Button(
-                onClick = { navController.navigate("homepage") },
+                onClick = {
+
+                    // Validate all input fields before proceeding
+                    emailError = ValidateForms.loginEmail(username)
+                    passwordError = ValidateForms.loginPassword(password)
+
+                    //if to check validations passed
+                    if (emailError.isEmpty() && passwordError.isEmpty()) {
+
+                        navController.navigate("homepage")
+                    }
+                },
+
                 shape = RoundedCornerShape(size = 10.dp),
                 modifier = Modifier
-                    .padding(70.dp, 220.dp, 0.dp, 0.dp)
+                    .padding(70.dp, 250.dp, 0.dp, 0.dp)
                     .width(250.dp)
                     .height(50.dp)
 
@@ -189,27 +242,28 @@ fun Login(navController: NavController) {
                 Text(text = "Login")
             }
 
-            HorizontalDivider(modifier = Modifier.padding(0.dp, 300.dp, 0.dp, 0.dp))
+
+            HorizontalDivider(modifier = Modifier.padding(0.dp, 350.dp, 0.dp, 0.dp))
 
             Column(
                 modifier = Modifier.align(Alignment.Center),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
-                Spacer(modifier = Modifier.height(200.dp))
 
                 Text(
                     text = "or continue with",
                     textAlign = TextAlign.Center,
                     fontSize = 18.sp,
-                    modifier = Modifier.padding(bottom = 10.dp) // Adjusted padding
+                    modifier = Modifier.padding(top = 300.dp) // Adjusted padding
                 )
 
+                Spacer(modifier = Modifier.height(20.dp))
                 //row for social media buttons
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp), // Optional padding to center the buttons within the column
+                        .padding(horizontal = 20.dp), // Optional padding to center the buttons within the column
                     horizontalArrangement = Arrangement.Center, // Center buttons horizontally
                     verticalAlignment = Alignment.CenterVertically
                 ) {
