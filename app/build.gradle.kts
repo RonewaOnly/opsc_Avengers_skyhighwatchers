@@ -57,6 +57,9 @@ android {
 }
 
 dependencies {
+    //Splash
+    implementation ("androidx.core:core-splashscreen:1.0.1")
+
     implementation(libs.androidx.media3.common)
     implementation(libs.androidx.media3.exoplayer)
     //camera
