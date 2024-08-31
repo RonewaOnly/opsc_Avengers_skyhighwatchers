@@ -1,14 +1,14 @@
-@file:Suppress("PackageName")
+@file:Suppress("DEPRECATION", "PackageName")
 
 package com.example.skyhigh_prototype.Model
 
 import android.Manifest
+import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.media.MediaMetadataRetriever
 import android.net.Uri
 import android.util.Log
 import android.widget.Toast
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.CameraSelector
@@ -17,10 +17,11 @@ import androidx.camera.core.ImageCaptureException
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.video.FileOutputOptions
+import androidx.camera.video.Quality
+import androidx.camera.video.QualitySelector
 import androidx.camera.video.Recorder
 import androidx.camera.video.Recording
 import androidx.camera.video.VideoCapture
-import androidx.camera.video.VideoOutput
 import androidx.camera.video.VideoRecordEvent
 import androidx.camera.view.PreviewView
 import androidx.compose.foundation.Image
@@ -45,14 +46,13 @@ import androidx.compose.ui.input.pointer.PointerInputChange
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
 import androidx.media3.common.MediaItem
-import androidx.media3.common.Player
-import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -61,9 +61,10 @@ import androidx.navigation.compose.rememberNavController
 import coil.compose.rememberImagePainter
 import com.google.android.exoplayer2.ui.PlayerView
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
-import java.io.IOException
+import java.util.concurrent.Executor
 
 @Composable
 fun CameraApp() {
@@ -89,111 +90,87 @@ fun CameraApp() {
 @Composable
 fun CameraScreen(navController: NavHostController) {
     val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
     val cameraProviderFuture = remember { ProcessCameraProvider.getInstance(context) }
     var imageCapture by remember { mutableStateOf<ImageCapture?>(null) }
     var videoCapture by remember { mutableStateOf<VideoCapture<Recorder>?>(null) }
     var recording by remember { mutableStateOf<Recording?>(null) }
+    val executor = ContextCompat.getMainExecutor(context)
+
     var hasCameraPermission by remember { mutableStateOf(false) }
+    var hasAudioPermission by remember { mutableStateOf(false) }
 
     val permissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestMultiplePermissions(),
-        onResult = { permissions ->
-            hasCameraPermission = permissions[Manifest.permission.CAMERA] == true
-        }
-    )
+        contract = ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        hasCameraPermission = permissions[Manifest.permission.CAMERA] == true
+        hasAudioPermission = permissions[Manifest.permission.RECORD_AUDIO] == true
+    }
 
     LaunchedEffect(Unit) {
-        permissionLauncher.launch(arrayOf(Manifest.permission.CAMERA, Manifest.permission.RECORD_AUDIO))
+        permissionLauncher.launch(arrayOf(
+            Manifest.permission.CAMERA,
+            Manifest.permission.RECORD_AUDIO
+        ))
     }
 
-    DisposableEffect(Unit) {
-        val cameraProvider = cameraProviderFuture.get()
-        onDispose {
-            // Properly unbind all use cases and clean up resources when this composable leaves the composition
-            cameraProvider.unbindAll()
+    if (hasCameraPermission && hasAudioPermission) {
+        DisposableEffect(lifecycleOwner) {
+            val cameraProvider = cameraProviderFuture.get()
+            val preview = Preview.Builder().build()
+            val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+
+            try {
+                cameraProvider.unbindAll()
+                imageCapture = ImageCapture.Builder().build()
+                val recorder = Recorder.Builder()
+                    .setQualitySelector(QualitySelector.from(Quality.HIGHEST))
+                    .build()
+                videoCapture = VideoCapture.withOutput(recorder)
+
+                cameraProvider.bindToLifecycle(
+                    lifecycleOwner,
+                    cameraSelector,
+                    preview,
+                    imageCapture,
+                    videoCapture
+                )
+            } catch (e: Exception) {
+                Log.e("CameraScreen", "Use case binding failed", e)
+            }
+
+            onDispose {
+                cameraProvider.unbindAll()
+            }
         }
-    }
 
-    if (hasCameraPermission) {
-        val cameraProvider = cameraProviderFuture.get()
-        val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
-        val preview = Preview.Builder().build()
-        val recorder = Recorder.Builder().build()
-
-        cameraProvider.unbindAll()  // Ensure no conflicting bindings
-        imageCapture = ImageCapture.Builder().build()
-        videoCapture = VideoCapture.withOutput(recorder)
-
-
-            cameraProvider.bindToLifecycle(
-                LocalContext.current as ComponentActivity,
-                cameraSelector,
-                preview,
-                imageCapture,
-                videoCapture
+        Column(modifier = Modifier.fillMaxSize()) {
+            AndroidView(
+                factory = { context ->
+                    PreviewView(context).apply {
+                        implementationMode = PreviewView.ImplementationMode.COMPATIBLE
+                    }
+                },
+                modifier = Modifier.weight(1f)
             )
-
-
-        val previewView = PreviewView(context).apply {
-            scaleType = PreviewView.ScaleType.FILL_CENTER
-            preview.setSurfaceProvider(surfaceProvider)
-        }
-
-        Column(
-            modifier = Modifier.fillMaxSize()
-        ) {
-            AndroidView({ previewView }, modifier = Modifier.weight(1f))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
                 Button(onClick = {
-                    val photoFile = createFile(context, "jpg")
-                    if (photoFile != null) {
-                        val outputOptions = ImageCapture.OutputFileOptions.Builder(photoFile).build()
-                        imageCapture?.takePicture(outputOptions, ContextCompat.getMainExecutor(context),
-                            object : ImageCapture.OnImageSavedCallback {
-                                override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
-                                    Toast.makeText(context, "Image saved: ${photoFile.absolutePath}", Toast.LENGTH_SHORT).show()
-                                }
-
-                                override fun onError(exception: ImageCaptureException) {
-                                    Toast.makeText(context, "Failed to save image: ${exception.message}", Toast.LENGTH_SHORT).show()
-                                }
-                            })
-                    } else {
-                        Toast.makeText(context, "Failed to create file for image.", Toast.LENGTH_SHORT).show()
-                    }
+                    takePhoto(imageCapture, executor, context)
                 }) {
                     Text("Capture Image")
                 }
 
                 Button(onClick = {
-                    if (recording == null) {
-                        val videoFile = createFile(context, "mp4")
-                        if (videoFile != null) {
-                            val outputOptions = FileOutputOptions.Builder(videoFile).build()
-                            recording = videoCapture?.output?.prepareRecording(context, outputOptions)
-                                ?.start(ContextCompat.getMainExecutor(context)) { recordEvent ->
-                                    when (recordEvent) {
-                                        is VideoRecordEvent.Start -> { /* Handle start */ }
-                                        is VideoRecordEvent.Finalize -> {
-                                            if (!recordEvent.hasError()) {
-                                                Toast.makeText(context, "Video saved: ${videoFile.absolutePath}", Toast.LENGTH_SHORT).show()
-                                            } else {
-                                                Toast.makeText(context, "Failed to record video: ${recordEvent.error}", Toast.LENGTH_SHORT).show()
-                                            }
-                                            recording = null
-                                        }
-                                    }
-                                }
-                        } else {
-                            Toast.makeText(context, "Failed to create file for video.", Toast.LENGTH_SHORT).show()
-                        }
+                    if (recording != null) {
+                        stopRecording(recording) { recording = null }
                     } else {
-                        recording?.stop()
-                        recording = null
+                        startRecording(videoCapture, executor, context) { newRecording ->
+                            recording = newRecording
+                        }
                     }
                 }) {
                     Text(if (recording == null) "Start Video" else "Stop Video")
@@ -205,94 +182,110 @@ fun CameraScreen(navController: NavHostController) {
             }
         }
     } else {
-        Text("Camera permission required")
+        Text("Camera and Audio permissions are required")
     }
 }
 
+private fun takePhoto(
+    imageCapture: ImageCapture?,
+    executor: Executor,
+    context: android.content.Context
+) {
+    imageCapture?.let {
+        val photoFile = createFile(context, "jpg")
+        val outputOptions = ImageCapture.OutputFileOptions.Builder(photoFile).build()
 
-fun createFile(context: android.content.Context, extension: String): File? {
-    return try {
-        File(context.externalMediaDirs.first(), "${System.currentTimeMillis()}.$extension")
-    } catch (e: IOException) {
-        Log.e("CameraApp", "Failed to create file: ${e.message}")
-        null
+        it.takePicture(outputOptions, executor, object : ImageCapture.OnImageSavedCallback {
+            override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
+                Toast.makeText(context, "Image saved: ${photoFile.absolutePath}", Toast.LENGTH_SHORT).show()
+            }
+
+            override fun onError(exception: ImageCaptureException) {
+                Toast.makeText(context, "Failed to save image: ${exception.message}", Toast.LENGTH_SHORT).show()
+            }
+        })
     }
 }
 
-@Composable
-fun GalleryScreen(navController: NavHostController) {
-    val context = LocalContext.current
-    val mediaFiles = remember { mutableStateListOf<File>() }
+private fun startRecording(
+    videoCapture: VideoCapture<Recorder>?,
+    executor: Executor,
+    context: android.content.Context,
+    onRecordingStarted: (Recording) -> Unit
+) {
+    val videoFile = createFile(context, "mp4")
+    val outputOptions = FileOutputOptions.Builder(videoFile).build()
 
-    LaunchedEffect(Unit) {
-        context.externalMediaDirs.firstOrNull()?.listFiles()?.let { files ->
-            mediaFiles.clear()
-            mediaFiles.addAll(files.filter { it.isFile && (it.extension == "jpg" || it.extension == "mp4") })
-        }
-    }
+    videoCapture?.let { capture ->
+        // Create a PendingRecording
+        val pendingRecording = capture.output.prepareRecording(context, outputOptions)
+            .apply {
+                if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
+                    withAudioEnabled()
+                }
+            }
 
-    // Ensure LazyColumn has a constrained height
-    Box(modifier = Modifier.fillMaxSize()) {
-        LazyColumn(modifier = Modifier.fillMaxSize()) {
-            items(mediaFiles) { file ->
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable {
-                            if (file.extension == "mp4") {
-                                navController.navigate("video_player/${Uri.encode(file.toUri().toString())}")
-                            } else if (file.extension == "jpg") {
-                                navController.navigate("image_detail/${Uri.encode(file.toUri().toString())}")
-                            }
-                        }
-                        .padding(8.dp)
-                ) {
-                    if (file.extension == "jpg") {
-                        Image(
-                            painter = rememberImagePainter(file.toUri()),
-                            contentDescription = null,
-                            modifier = Modifier.size(100.dp)
-                        )
-                    } else if (file.extension == "mp4") {
-                        val thumbnailBitmap = remember { mutableStateOf<Bitmap?>(null) }
-
-                        LaunchedEffect(file) {
-                            thumbnailBitmap.value = generateVideoThumbnail(context, file)
-                        }
-
-                        thumbnailBitmap.value?.let { bitmap ->
-                            Image(
-                                bitmap = bitmap.asImageBitmap(),
-                                contentDescription = null,
-                                modifier = Modifier.size(100.dp)
-                            )
-                        } ?: run {
-                            Image(
-                                painter = painterResource(id = android.R.drawable.ic_media_play),
-                                contentDescription = null,
-                                modifier = Modifier.size(100.dp)
-                            )
-                        }
-                    }
-                    Spacer(modifier = Modifier.width(16.dp))
-                    Column {
-                        Text(file.name)
-                        Button(
-                            onClick = {
-                                mediaFiles.remove(file)
-                                file.delete()
-                                Toast.makeText(context, "Deleted: ${file.name}", Toast.LENGTH_SHORT).show()
-                            },
-                            colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
-                        ) {
-                            Text("Delete", color = Color.White)
-                        }
+        // Start the recording
+        val recording = pendingRecording.start(executor) { recordEvent ->
+            when (recordEvent) {
+                is VideoRecordEvent.Start -> {
+                    Log.d("CameraXApp", "Recording started")
+                }
+                is VideoRecordEvent.Finalize -> {
+                    if (!recordEvent.hasError()) {
+                        Toast.makeText(context, "Video saved: ${videoFile.absolutePath}", Toast.LENGTH_SHORT).show()
+                    } else {
+                        Toast.makeText(context, "Video capture failed: ${recordEvent.cause?.message}", Toast.LENGTH_SHORT).show()
                     }
                 }
             }
         }
 
-        // Back to camera button
+        // Call the callback with the new recording
+        onRecordingStarted(recording)
+    }
+}
+private fun stopRecording(recording: Recording?, onRecordingStopped: () -> Unit) {
+    recording?.stop()
+    onRecordingStopped()
+}
+
+fun createFile(context: android.content.Context, extension: String): File {
+    val mediaDir = context.externalMediaDirs.firstOrNull()?.let {
+        File(it, "CameraApp").apply { mkdirs() }
+    }
+    return File(mediaDir, "${System.currentTimeMillis()}.$extension")
+}
+
+@Composable
+fun GalleryScreen(navController: NavHostController) {
+    val context = LocalContext.current
+    var mediaFiles by remember { mutableStateOf<List<File>>(emptyList()) }
+    val coroutineScope = rememberCoroutineScope()
+
+    LaunchedEffect(Unit) {
+        coroutineScope.launch(Dispatchers.IO) {
+            val files = context.externalMediaDirs.firstOrNull()
+                ?.listFiles { file -> file.isFile && (file.extension == "jpg" || file.extension == "mp4") }
+                ?.sortedByDescending { it.lastModified() }
+                ?: emptyList()
+            mediaFiles = files
+        }
+    }
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        LazyColumn(modifier = Modifier.fillMaxWidth().height(2500.dp)) {
+            items(mediaFiles) { file ->
+                GalleryItem(file, navController) {
+                    coroutineScope.launch(Dispatchers.IO) {
+                        file.delete()
+                        mediaFiles = mediaFiles.filter { it != file }
+                    }
+                    Toast.makeText(context, "Deleted: ${file.name}", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+
         Button(
             onClick = { navController.navigate("camera") },
             modifier = Modifier.align(Alignment.BottomCenter).padding(16.dp)
@@ -302,14 +295,70 @@ fun GalleryScreen(navController: NavHostController) {
     }
 }
 
+@Composable
+fun GalleryItem(file: File, navController: NavHostController, onDelete: () -> Unit) {
+    val context = LocalContext.current
+    var thumbnailBitmap by remember { mutableStateOf<Bitmap?>(null) }
 
-@OptIn(UnstableApi::class)
+    LaunchedEffect(file) {
+        thumbnailBitmap = if (file.extension == "mp4") {
+            generateVideoThumbnail(context, file)
+        } else {
+            null
+        }
+    }
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable {
+                if (file.extension == "mp4") {
+                    navController.navigate("video_player/${Uri.encode(file.toUri().toString())}")
+                } else if (file.extension == "jpg") {
+                    navController.navigate("image_detail/${Uri.encode(file.toUri().toString())}")
+                }
+            }
+            .padding(8.dp)
+    ) {
+        if (file.extension == "jpg") {
+            Image(
+                painter = rememberImagePainter(file),
+                contentDescription = null,
+                modifier = Modifier.size(100.dp)
+            )
+        } else if (file.extension == "mp4") {
+            thumbnailBitmap?.let { bitmap ->
+                Image(
+                    bitmap = bitmap.asImageBitmap(),
+                    contentDescription = null,
+                    modifier = Modifier.size(100.dp)
+                )
+            } ?: Image(
+                painter = painterResource(id = android.R.drawable.ic_media_play),
+                contentDescription = null,
+                modifier = Modifier.size(100.dp)
+            )
+        }
+        Spacer(modifier = Modifier.width(16.dp))
+        Column {
+            Text(file.name)
+            Button(
+                onClick = onDelete,
+                colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
+            ) {
+                Text("Delete", color = Color.White)
+            }
+        }
+    }
+}
+
 suspend fun generateVideoThumbnail(context: android.content.Context, videoFile: File): Bitmap? {
     return withContext(Dispatchers.IO) {
         try {
             val retriever = MediaMetadataRetriever()
             retriever.setDataSource(videoFile.path)
             val thumbnail = retriever.getFrameAtTime(0)
+            retriever.release()
             thumbnail
         } catch (e: Exception) {
             Log.e("ThumbnailError", "Failed to generate thumbnail: ${e.message}")
@@ -321,41 +370,47 @@ suspend fun generateVideoThumbnail(context: android.content.Context, videoFile: 
 @Composable
 fun VideoPlayerScreen(videoUri: Uri, navController: NavHostController) {
     val context = LocalContext.current
-    val exoPlayer: ExoPlayer = remember {
+    val exoPlayer = remember {
         ExoPlayer.Builder(context).build().apply {
             setMediaItem(MediaItem.fromUri(videoUri))
             prepare()
         }
     }
 
-    DisposableEffect(
-        kotlin.Unit
-    ) {
+    DisposableEffect(Unit) {
         onDispose { exoPlayer.release() }
     }
 
-    Button(
-        onClick = { navController.navigateUp() },
-        modifier = Modifier.padding(16.dp)
-    ) {
-        Text("Back to Gallery")
+    Column(modifier = Modifier.fillMaxSize()) {
+        AndroidView(
+            factory = { context ->
+                PlayerView(context).apply {
+                    player = exoPlayer as com.google.android.exoplayer2.Player
+                    useController = true
+                }
+            },
+            modifier = Modifier.weight(1f)
+        )
+
+        Button(
+            onClick = { navController.navigateUp() },
+            modifier = Modifier.padding(16.dp)
+        ) {
+            Text("Back to Gallery")
+        }
     }
 }
 
 @Composable
 fun ImageDetailScreen(imageUri: Uri, navController: NavHostController) {
-    val zoomState = rememberZoomState()
-
     Column(
         modifier = Modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        ZoomableImage(
+        Image(
             painter = rememberImagePainter(imageUri),
             contentDescription = null,
-            modifier = Modifier.fillMaxSize(),
-            zoomState = zoomState,
-            contentScale = ContentScale.Fit
+            modifier = Modifier.weight(1f)
         )
 
         Button(
@@ -369,7 +424,7 @@ fun ImageDetailScreen(imageUri: Uri, navController: NavHostController) {
 
 @Composable
 fun rememberZoomState(): ZoomState {
-    val scale = remember { mutableStateOf(1f) }
+    val scale = remember { mutableFloatStateOf(1f) }
     val offset = remember { mutableStateOf(Offset.Zero) }
     return ZoomState(scale, offset)
 }
@@ -384,9 +439,9 @@ fun ZoomableImage(
     contentScale: ContentScale = ContentScale.Fit,
     alignment: Alignment = Alignment.Center
 ) {
-    var scale by zoomState.scale
-    var offset by zoomState.offset
-    var endPoint = Offset.Zero
+    val scale by zoomState.scale
+    val offset by zoomState.offset
+    val endPoint = Offset.Zero
     Image(
         painter = painter,
         contentDescription = contentDescription,
