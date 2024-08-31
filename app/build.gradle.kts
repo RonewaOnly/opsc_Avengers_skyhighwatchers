@@ -16,7 +16,9 @@ android {
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
-
+        // Load the API key from local.properties
+        val apiKey = project.hasProperty("GOOGLE_API_KEY")
+        buildConfigField ("String", "GOOGLE_API_KEY", "\"${apiKey}\"")
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
             useSupportLibrary = true
