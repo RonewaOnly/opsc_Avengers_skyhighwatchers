@@ -105,7 +105,7 @@ fun Main(){
             },
             floatingActionButton = {
                 ExtendedFloatingActionButton(
-                    text = { Text(text="") },
+                    text = { Text(text="World") },
                     icon = { Icon(painter = painterResource(id = R.drawable.globe_solid), contentDescription = "world icon",modifier = Modifier.size(35.dp)) },
                     onClick = { rememberNavController.navigate("ViewMap") })
             }
