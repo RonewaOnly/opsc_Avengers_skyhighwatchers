@@ -1,11 +1,16 @@
 import org.jetbrains.kotlin.storage.CacheResetOnProcessCanceled.enabled
+import java.io.FileInputStream
+import java.util.Properties
 
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.kotlin.android)
     id("com.google.gms.google-services")
 }
-
+//Loading the mapbox api
+val apikeyPref = rootProject.file("APIKEYS.properties")
+val apikeyproperties = Properties()
+apikeyproperties.load(FileInputStream(apikeyPref))
 android {
     namespace = "com.example.skyhigh_prototype"
     compileSdk = 34
@@ -16,9 +21,13 @@ android {
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
+
         // Load the API key from local.properties
         val apiKey = project.hasProperty("GOOGLE_API_KEY")
+        val apikey2 = project.hasProperty("MAPBOX_API_KEY")
         buildConfigField ("String", "GOOGLE_API_KEY", "\"${apiKey}\"")
+        buildConfigField ("String", "MAPBOX_API_KEY", "\"${apikey2}\"")
+
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
             useSupportLibrary = true
@@ -45,6 +54,7 @@ android {
     buildFeatures {
         compose = true
         viewBinding =true
+        buildConfig = true
 
     }
     composeOptions {
@@ -59,6 +69,10 @@ android {
 }
 
 dependencies {
+    //Map Box
+    implementation("com.mapbox.maps:android:11.6.0")
+    implementation("com.mapbox.extension:maps-compose:11.6.0")
+
     //Splash
     implementation ("androidx.core:core-splashscreen:1.0.1")
 

@@ -12,6 +12,11 @@
     <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_MEDIA_LOCATION" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <!-- Always include this permission -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+
+    <!-- Include only if your app benefits from precise location access. -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission
         android:name="android.permission.WRITE_EXTERNAL_STORAGE"
         tools:ignore="ScopedStorage" />
@@ -26,6 +31,9 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.SkyHigh_prototype"
         tools:targetApi="31" >
+        <meta-data
+            android:name="com.mapbox.token"
+            android:value= "sk.eyJ1Ijoic3R1ZGVudHN0YXIiLCJhIjoiY2x6bGh4NGp5MDJ4bjJqc2lsNThicmV6dSJ9.Oe_UCSkcsmXOJlwLIVzbMg" />
         <activity
             android:name=".MainActivity2"
             android:exported="false" />
