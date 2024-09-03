@@ -66,6 +66,7 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.skyhigh_prototype.Model.MapboxViewModel
 import com.example.skyhigh_prototype.R
 import com.example.skyhigh_prototype.R.color.dark_blue
 import kotlinx.coroutines.launch
@@ -101,7 +102,12 @@ fun Main(){
                         pressedElevation = 6.dp
                     )
                 )
-
+            },
+            floatingActionButton = {
+                ExtendedFloatingActionButton(
+                    text = {  },
+                    icon = { Icon(painter = painterResource(id = R.drawable.globe_solid), contentDescription = "world icon",modifier = Modifier.size(35.dp)) },
+                    onClick = { rememberNavController.navigate("ViewMap") })
             }
         ) { contentPadding ->
             // Screen content
@@ -118,6 +124,9 @@ fun Main(){
                 composable("collection"){
                     PersonalCollection()
                 }
+                composable("ViewMap"){
+                    MapOption(rememberNavController )
+                }
                 composable("logout"){
                     Logout(rememberNavController)
                 }
@@ -126,6 +135,7 @@ fun Main(){
         }
     }
 }
+
 @Composable
 fun NavDrawer(navController: NavController){
     Column(
@@ -214,6 +224,7 @@ fun NavDrawer(navController: NavController){
 @Composable
 fun Homepage(){
     var enabled by remember { mutableStateOf(true) }
+
     Scaffold {PaddingValue ->
         Column(
             modifier = Modifier.fillMaxSize()
@@ -265,7 +276,9 @@ fun Homepage(){
                         }
                     }
                     Spacer(modifier = Modifier.padding(20.dp))
+
                 }
+
             }
         }
     }
