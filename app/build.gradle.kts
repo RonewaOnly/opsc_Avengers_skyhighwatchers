@@ -1,4 +1,3 @@
-import org.jetbrains.kotlin.storage.CacheResetOnProcessCanceled.enabled
 import java.io.FileInputStream
 import java.util.Properties
 
@@ -72,6 +71,8 @@ dependencies {
     //Map Box
     implementation("com.mapbox.maps:android:11.6.0")
     implementation("com.mapbox.extension:maps-compose:11.6.0")
+    implementation("com.google.android.gms:play-services-maps:19.0.0")
+    implementation("com.google.maps.android:maps-compose:2.2.0")
 
     //Splash
     implementation ("androidx.core:core-splashscreen:1.0.1")
@@ -79,13 +80,13 @@ dependencies {
     implementation(libs.androidx.media3.common)
     implementation(libs.androidx.media3.exoplayer)
     //camera
-    val camerax_version = "1.2.2"
-    implementation ("androidx.camera:camera-core:${camerax_version}")
-    implementation ("androidx.camera:camera-camera2:${camerax_version}")
-    implementation ("androidx.camera:camera-lifecycle:${camerax_version}")
-    implementation ("androidx.camera:camera-video:${camerax_version}")
-    implementation ("androidx.camera:camera-view:${camerax_version}")
-    implementation ("androidx.camera:camera-extensions:${camerax_version}")
+    val cameraVersion = "1.2.2"
+    implementation ("androidx.camera:camera-core:${cameraVersion}")
+    implementation ("androidx.camera:camera-camera2:${cameraVersion}")
+    implementation ("androidx.camera:camera-lifecycle:${cameraVersion}")
+    implementation ("androidx.camera:camera-video:${cameraVersion}")
+    implementation ("androidx.camera:camera-view:${cameraVersion}")
+    implementation ("androidx.camera:camera-extensions:${cameraVersion}")
     //Video
     implementation ("com.google.accompanist:accompanist-permissions:0.31.0-alpha")
     implementation("com.google.android.exoplayer:exoplayer:2.19.1")
