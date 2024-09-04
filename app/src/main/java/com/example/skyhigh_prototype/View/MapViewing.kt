@@ -15,10 +15,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.skyhigh_prototype.Model.MapboxViewModel
+import com.example.skyhigh_prototype.Model.Maps
 
 @Composable
 fun MapOption(navController: NavController){
-    val map = MapboxViewModel()
+    //val map = MapboxViewModel()
 
     Column(
         modifier = Modifier.fillMaxSize().padding(top = 20.dp),
@@ -29,6 +30,6 @@ fun MapOption(navController: NavController){
             Icon(imageVector = Icons.Filled.ArrowBack, contentDescription = "")
         }
         HorizontalDivider()
-        map.Maps()
+        Maps()
     }
 }
