@@ -1,3 +1,5 @@
+@file:Suppress("PackageName")
+
 package com.example.skyhigh_prototype.Model
 
 import androidx.compose.foundation.layout.fillMaxSize

@@ -1,3 +1,5 @@
+@file:Suppress("PackageName")
+
 package com.example.skyhigh_prototype.View
 
 import androidx.compose.foundation.background
