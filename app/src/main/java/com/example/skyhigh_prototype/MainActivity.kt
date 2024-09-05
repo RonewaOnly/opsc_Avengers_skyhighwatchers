@@ -105,7 +105,7 @@ fun SkyHigh(mainActivity: MainActivity) {
             ForgotPassword(rememberNav)
         }
         composable("homepage") {
-            Main(viewModel = mainActivity.mapboxViewModel) // Pass ViewModel to Main Composable
+            Main( mainActivity.mapboxViewModel) // Passess ViewModel to Main Composable
         }
     }
 }
