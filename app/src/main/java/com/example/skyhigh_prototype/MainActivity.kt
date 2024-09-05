@@ -37,13 +37,10 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.skyhigh_prototype.Model.MapboxViewModel
-import com.example.skyhigh_prototype.Model.Maps
 import com.example.skyhigh_prototype.View.ForgotPassword
 import com.example.skyhigh_prototype.View.Login
 import com.example.skyhigh_prototype.View.Main
 import com.example.skyhigh_prototype.View.Register
-import com.mapbox.android.core.permissions.PermissionsListener
-import com.mapbox.android.core.permissions.PermissionsManager
 import kotlinx.coroutines.delay
 
 class MainActivity : ComponentActivity() {
@@ -75,7 +72,9 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    @Deprecated("This method has been deprecated in favor of using the Activity Result API\n      which brings increased type safety via an {@link ActivityResultContract} and the prebuilt\n      contracts for common intents available in\n      {@link androidx.activity.result.contract.ActivityResultContracts}, provides hooks for\n      testing, and allow receiving results in separate, testable classes independent from your\n      activity. Use\n      {@link #registerForActivityResult(ActivityResultContract, ActivityResultCallback)} passing\n      in a {@link RequestMultiplePermissions} object for the {@link ActivityResultContract} and\n      handling the result in the {@link ActivityResultCallback#onActivityResult(Object) callback}.")
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
+        @Suppress("DEPRECATION")
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == locationPermissionsRequestCode) {
             if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
@@ -105,7 +104,7 @@ fun SkyHigh(mainActivity: MainActivity) {
             ForgotPassword(rememberNav)
         }
         composable("homepage") {
-            Main( mainActivity.mapboxViewModel) // Passess ViewModel to Main Composable
+            Main( mainActivity.mapboxViewModel) // Passes ViewModel to Main Composable
         }
     }
 }
@@ -148,17 +147,17 @@ fun AnimatedLogo() {
 
     val alpha = animateFloatAsState(
         targetValue = if (animationPhase == 1) 0.5f else 1f,
-        animationSpec = tween(durationMillis = 2500)
+        animationSpec = tween(durationMillis = 2500), label = ""
     )
 
     val scale = animateFloatAsState(
         targetValue = if (animationPhase == 1) 1.5f else 1f,
-        animationSpec = tween(durationMillis = 2500)
+        animationSpec = tween(durationMillis = 2500), label = ""
     )
 
     val translationY = animateFloatAsState(
         targetValue = if (animationPhase == 1) 100f else 0f,
-        animationSpec = tween(durationMillis = 2500)
+        animationSpec = tween(durationMillis = 2500), label = ""
     )
 
     Image(
