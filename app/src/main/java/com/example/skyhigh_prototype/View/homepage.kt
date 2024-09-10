@@ -81,8 +81,8 @@ fun Main(@Suppress("UNUSED_PARAMETER") mapViewModel: MapboxViewModel = viewModel
 
             topBar = {
                 ExtendedFloatingActionButton(
-                    text = { Text("") },
-                    icon = { Icon(Icons.Filled.Menu, contentDescription = "", tint = Color.Blue) },
+                    text = { Text("Stamp") },
+                    icon = { Icon(Icons.Filled.Menu, contentDescription = "", tint = Color.Black) },
                     onClick = {
                         scope.launch {
                             drawerState.apply {
