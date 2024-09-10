@@ -3,6 +3,8 @@
 package com.example.skyhigh_prototype.View
 
 
+import android.os.Handler
+import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -37,6 +39,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -46,6 +49,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.skyhigh_prototype.R
+import com.google.firebase.auth.FirebaseAuth
 
 @Composable
 fun Login(navController: NavController) {
@@ -67,6 +71,9 @@ fun Login(navController: NavController) {
     //Error states
     var emailError by remember { mutableStateOf("") }
     var passwordError by remember { mutableStateOf("") }
+
+    //firebase instances
+    var auth : FirebaseAuth
 
     //column for page
     Column(
@@ -184,6 +191,8 @@ fun Login(navController: NavController) {
 
             }//end of column
 
+            //val context for toast message
+            val context = LocalContext.current
 
             //box for remember me and forgot password
             Box(
@@ -221,6 +230,10 @@ fun Login(navController: NavController) {
             Button(
                 onClick = {
 
+                    //initialising firebase instances
+                    auth = FirebaseAuth.getInstance()
+
+
                     // Validate all input fields before proceeding
                     emailError = ValidateForms.loginEmail(username)
                     passwordError = ValidateForms.loginPassword(password)
@@ -228,7 +241,23 @@ fun Login(navController: NavController) {
                     //if to check validations passed
                     if (emailError.isEmpty() && passwordError.isEmpty()) {
 
-                        navController.navigate("homepage")
+                        //using firebase auth method to sign in a user
+                        auth.signInWithEmailAndPassword(username, password).addOnSuccessListener {
+
+                            //to alert user
+                            Toast.makeText(context, "Successful Login you will be shortly redirected to your dashboard", Toast.LENGTH_LONG).show()
+                            //handler to delay intent
+                            @Suppress("DEPRECATION")
+                            Handler().postDelayed({
+                                //navigating to home page
+                                navController.navigate("homepage")
+                            }, 2000)
+
+
+                        }.addOnFailureListener {
+
+                            passwordError = "Email or Password Incorrect"
+                        }
                     }
                 },
 
