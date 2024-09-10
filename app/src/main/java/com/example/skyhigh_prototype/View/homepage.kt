@@ -81,7 +81,7 @@ fun Main(@Suppress("UNUSED_PARAMETER") mapViewModel: MapboxViewModel = viewModel
 
             topBar = {
                 ExtendedFloatingActionButton(
-                    text = { Text("Stamp") },
+                    text = { Text("") },
                     icon = { Icon(Icons.Filled.Menu, contentDescription = "", tint = Color.Black) },
                     onClick = {
                         scope.launch {
