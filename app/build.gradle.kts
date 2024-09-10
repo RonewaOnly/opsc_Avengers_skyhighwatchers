@@ -75,10 +75,14 @@ dependencies {
     implementation("com.google.maps.android:maps-compose:2.2.0")
 
     //Splash
-    implementation ("androidx.core:core-splashscreen:1.0.1")
+    implementation (libs.androidx.core.splashscreen)
 
     implementation(libs.androidx.media3.common)
     implementation(libs.androidx.media3.exoplayer)
+    implementation(libs.firebase.auth.v2103)
+    implementation(libs.firebase.firestore)
+
+
     //camera
     val cameraVersion = "1.2.2"
     implementation ("androidx.camera:camera-core:${cameraVersion}")
@@ -98,14 +102,10 @@ dependencies {
     implementation ("com.squareup.retrofit2:converter-gson:2.9.0")
     //User location service
     //implementation ("com.google.android.gms:play-services-location:21.0.1")
-    //firebase
-    implementation(platform("com.google.firebase:firebase-bom:33.1.2"))
-    implementation("com.google.firebase:firebase-analytics")
-    implementation ("com.google.firebase:firebase-auth:21.0.3")
+
     //Auth
-    //implementation ("com.google.android.gms:play-services-auth:21.0.1")
-    //facebook
-    implementation("com.facebook.android:facebook-login:11.2.0")
+    
+
     //processing images
     implementation( "io.coil-kt:coil-compose:2.4.0")
     // Splash screen API
