@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "884947624000",
+    "project_id": "sky-high-watchers",
+    "storage_bucket": "sky-high-watchers.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:884947624000:android:0a1a43e20433c203df7fa5",
+        "android_client_info": {
+          "package_name": "com.example.skyhigh_prototype"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "884947624000-q2l9mbga7r5skl65oi4rti86j4h62dcf.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.skyhigh_prototype",
+            "certificate_hash": "b8be20a6f643486abfa4e0f0bb3b64a40e9a5208"
+          }
+        },
+        {
+          "client_id": "884947624000-4bbue6q7lcuebqkjiaj6cvtjjfhl4tka.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDthDHCuqt9_X9AUz38o30SjO7OuZi8YHc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "884947624000-4bbue6q7lcuebqkjiaj6cvtjjfhl4tka.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
