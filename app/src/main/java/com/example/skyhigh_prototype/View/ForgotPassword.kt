@@ -178,28 +178,4 @@ fun ForgotPassword(navController: NavController){
         }
 
     }//end of column
-
-
-
-
-//        Column(
-//            modifier = Modifier
-//                .fillMaxSize()
-//                .border(1.dp, Color.Magenta, RectangleShape),
-//            verticalArrangement = Arrangement.Center,
-//            horizontalAlignment = Alignment.CenterHorizontally
-//        ) {
-//            Text(text = "Text must be placed here.")
-//            Spacer(modifier = Modifier.padding(10.dp))
-//            OutlinedTextField(//kotlin
-//                value = email,
-//                onValueChange = {email = it},
-//                label = {
-//                    Text(text = "Enter your email")
-//                }
-//            )
-//            Button(onClick = { navController.navigate("login") }) {
-//                Text(text = "confirm")
-//            }
-//        }
 }

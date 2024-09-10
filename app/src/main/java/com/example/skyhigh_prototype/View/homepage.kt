@@ -72,11 +72,13 @@ fun Main(@Suppress("UNUSED_PARAMETER") mapViewModel: MapboxViewModel = viewModel
     val scope = rememberCoroutineScope()
     val rememberNavController = rememberNavController()
     ModalNavigationDrawer(
+
         drawerState = drawerState,
         drawerContent = {
             ModalDrawerSheet { NavDrawer(navController = rememberNavController, drawerState = drawerState, scope = rememberCoroutineScope()) }
         },
     ) {
+        Spacer(modifier = Modifier.height(40.dp).padding(20.dp))
         Scaffold(
 
             topBar = {
