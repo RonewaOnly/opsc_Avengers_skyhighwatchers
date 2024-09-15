@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">Aplicación para observar aves</string>
+    <string name="notification_settings">Configuración de Notificaciones</string>
+    <string name="theme_settings">Configuración del Tema</string>
+    <string name="language_settings">Configuración del Idioma</string>
+    <string name="change_language">Cambiar Idioma</string>
+    <string name="switch_to_light_mode">Cambiar a Modo Claro</string>
+    <string name="switch_to_dark_mode">Cambiar a Modo Oscuro</string>
+</resources>

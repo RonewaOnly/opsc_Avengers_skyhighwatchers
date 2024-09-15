@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">Application d\'observation des oiseaux</string>
+    <string name="notification_settings">Paramètres de Notification</string>
+    <string name="theme_settings">Paramètres de Thème</string>
+    <string name="language_settings">Paramètres de Langue</string>
+    <string name="change_language">Changer de Langue</string>
+    <string name="switch_to_light_mode">Passer au Mode Clair</string>
+    <string name="switch_to_dark_mode">Passer au Mode Sombre</string>
+</resources>
