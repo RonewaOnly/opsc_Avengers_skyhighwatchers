@@ -30,6 +30,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.example.skyhigh_prototype.Model.CameraApp
+import com.example.skyhigh_prototype.Model.LocationScreen
+import com.example.skyhigh_prototype.Model.LocationViewModel
 //import com.example.skyhigh_prototype.CameraApp
 import com.example.skyhigh_prototype.R
 import com.google.firebase.Timestamp
@@ -196,7 +198,10 @@ fun EditCard(card_id: String, card_details: List<BirdTip>) {
     card_details.forEach { tip ->
         if (tip.card_id == card_id) {
             LazyColumn(
-                modifier = Modifier.height(500.dp).background(Color.White).padding(top=60.dp)
+                modifier = Modifier
+                    .height(500.dp)
+                    .background(Color.White)
+                    .padding(top = 60.dp)
             ) {
                 item {
                     Row(
@@ -244,7 +249,8 @@ fun EditCard(card_id: String, card_details: List<BirdTip>) {
                     TextField(value = "", onValueChange = {}, label = { Text(text = "Enter bird description.") })
                     bird_found.LATITUDE = "54°45′N"
                     bird_found.LONGITUDE = "55°58′E"
-                    Text(text = "LATITUDE: ${bird_found.LATITUDE}, LONGITUDE: ${bird_found.LONGITUDE}")
+                    //Text(text = "LATITUDE: ${bird_found.LATITUDE}, LONGITUDE: ${bird_found.LONGITUDE}")
+                    LocationScreen(viewModel = LocationViewModel())
                     Button(onClick = { mediaButton = true }) {
                         Text(text = "Media button")
                     }
