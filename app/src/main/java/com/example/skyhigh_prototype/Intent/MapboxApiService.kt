@@ -6,7 +6,7 @@ import retrofit2.http.Query
 interface MapboxApiService {
     @GET("geocoding/v5/mapbox.places/{query}.json")
     suspend fun searchLocation(
-        @Query("") accessToken: String,
+        @Query("key") accessToken: String,
         @Query("query") query: String
     )
 }

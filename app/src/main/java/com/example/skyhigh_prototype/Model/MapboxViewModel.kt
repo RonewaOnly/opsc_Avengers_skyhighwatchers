@@ -125,7 +125,7 @@ fun Maps(mapboxViewModel: MapboxViewModel = viewModel()) {
 
             // Update camera if current location is available
             currentLocation?.let { location ->
-                Log.d("Mapss", "Updating camera to location: ${location.latitude}, ${location.longitude}")
+                Log.d("Maps", "Updating camera to location: ${location.latitude}, ${location.longitude}")
                 mapboxMap.setCamera(CameraOptions.Builder()
                     .zoom(14.0)
                     .center(Point.fromLngLat(location.longitude, location.latitude))
