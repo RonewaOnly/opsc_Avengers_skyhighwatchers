@@ -45,7 +45,7 @@ fun Profile(navController: NavController){
         userId = "user-123456",
         username = "BirdLover99",
         email = "birdlover99@example.com",
-        profilePictureUrl = "https://example.com/images/birdlover99.jpg",
+        profilePictureUrl = "https://th.bing.com/th/id/OIP.sg1wzZN-FkYl9mFfJ4DQmQHaE8?rs=1&pid=ImgDetMain",
         bio = "Avid bird watcher from the Pacific Northwest, love spotting rare species!",
         location = "Seattle, WA",
         joinedDate = "March 20, 2023",
