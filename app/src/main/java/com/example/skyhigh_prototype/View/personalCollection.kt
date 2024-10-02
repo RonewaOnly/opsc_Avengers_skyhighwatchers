@@ -35,12 +35,16 @@ import com.example.skyhigh_prototype.Model.LocationViewModel
 //import com.example.skyhigh_prototype.CameraApp
 import com.example.skyhigh_prototype.R
 import com.google.firebase.Timestamp
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
+
 
 @Composable
 fun PersonalCollection() {
     val onClick = remember { mutableStateOf(false) }
     var newObject by remember { mutableStateOf(listOf<BirdTip>()) }
     var editButton by remember { mutableStateOf(false) }
+
 
     LazyVerticalGrid(
         columns = GridCells.Fixed(3),
@@ -91,6 +95,9 @@ fun CreateCard(onClose: () -> Unit, onSave: (BirdTip) -> Unit) {
     var cardName by remember { mutableStateOf("") }
     var cardDescription by remember { mutableStateOf("") }
     var birdType by remember { mutableStateOf("") }
+    //firebase instances
+    var auth : FirebaseAuth
+    var firestore: FirebaseFirestore
 
     val context = LocalContext.current
 
@@ -131,6 +138,34 @@ fun CreateCard(onClose: () -> Unit, onSave: (BirdTip) -> Unit) {
                     modifier = Modifier.padding(top = 10.dp)
                 )
                 OutlinedButton(onClick = {
+
+                    //initialize
+                    auth = FirebaseAuth.getInstance()
+                    firestore = FirebaseFirestore.getInstance()
+
+                    //user id
+                    val userID = auth.currentUser?.uid.toString()
+
+                    //adding to hash map
+                    val birdCollection = hashMapOf(
+
+                        "Collection Name" to cardName,
+                        "Card Description" to cardDescription,
+                        "Bird Type" to birdType
+                    )
+
+                    //adding to firestore collection to a user with their id
+                    firestore.collection("Users").document(userID).collection("Bird Collection").add(birdCollection).addOnSuccessListener {
+
+                        //toast message
+                        Toast.makeText(context, "Save Collection", Toast.LENGTH_LONG).show()
+
+                    }.addOnFailureListener {
+
+                        //toast message
+                        Toast.makeText(context, "Unable to save collection", Toast.LENGTH_LONG).show()
+                    }
+
                     onSave(
                         BirdTip(
                             card_id = "card_1",
