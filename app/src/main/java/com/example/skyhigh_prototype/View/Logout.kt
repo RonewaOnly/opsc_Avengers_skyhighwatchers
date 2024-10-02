@@ -2,45 +2,65 @@
 
 package com.example.skyhigh_prototype.View
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.OutlinedButton
+//noinspection UsingMaterialAndMaterial3Libraries
+
+import android.os.Handler
+//noinspection UsingMaterialAndMaterial3Libraries
+import androidx.compose.material.AlertDialog
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.dp
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.navigation.NavController
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 
 @Composable
-fun Logout(navController: NavController){
+fun Logout(navController: NavController) {
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(top = 50.dp)
-            .background(Color.LightGray),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        OutlinedButton(onClick = { /*TODO*/ }) {
-            Text(text = "Logout")
-        }
-        Spacer(modifier = Modifier.weight(1f))
+    //alert dialog variable
+    var showAlertDialog by remember { mutableStateOf(true) }
 
-        HorizontalDivider()
-        OutlinedButton(onClick = { /*TODO*/ }) {
-            Text(text = "Delete Accounts")
-        }
-        TextButton(onClick = { /*TODO*/ }) {
-            Text(text = "pause account")
-        }
+    //auth and firestore instances
+    val auth: FirebaseAuth = FirebaseAuth.getInstance()
+    val firestore: FirebaseFirestore = FirebaseFirestore.getInstance()
+
+    //to show dialog
+    if (showAlertDialog) {
+        AlertDialog(
+            onDismissRequest = { showAlertDialog = false },
+            title = { Text(text = "Confirm Logout") },
+            text = { Text(text = "Are you sure you want to log out?") },
+            confirmButton = {
+                TextButton(onClick = {
+                    //sign out user and clears log in details
+                    firestore.clearPersistence()
+                    auth.signOut()
+
+                    //to delay intent to login page
+                    @Suppress("DEPRECATION")
+                    Handler().postDelayed({
+                        navController.navigate("login")
+                    }, 2000)
+
+                    //closes dialog
+                    showAlertDialog = false
+                }) {
+                    Text(text = "Yes")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    //closes dialog
+                    showAlertDialog = false
+
+                }) {
+                    Text(text = "No")
+                }
+            }
+        )
     }
 }
