@@ -129,13 +129,13 @@ fun CreateCard(onClose: () -> Unit, onSave: (BirdTip) -> Unit) {
                     value = cardDescription,
                     onValueChange = { cardDescription = it },
                     label = { Text(text = "Enter Collection Description") },
-                    modifier = Modifier.padding(top = 10.dp)
+                    modifier = Modifier.padding(top = 20.dp)
                 )
                 TextField(
                     value = birdType,
                     onValueChange = { birdType = it },
                     label = { Text(text = "Enter Bird Type") },
-                    modifier = Modifier.padding(top = 10.dp)
+                    modifier = Modifier.padding(top = 20.dp)
                 )
                 OutlinedButton(onClick = {
 
