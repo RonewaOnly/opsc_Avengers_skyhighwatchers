@@ -29,6 +29,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import com.example.skyhigh_prototype.Data.BirdTip
+import com.example.skyhigh_prototype.Data.Location
 import com.example.skyhigh_prototype.Model.CameraApp
 import com.example.skyhigh_prototype.Model.LocationScreen
 import com.example.skyhigh_prototype.Model.LocationViewModel
@@ -304,46 +306,46 @@ fun EditCard(card_id: String, card_details: List<BirdTip>) {
         }
     }
 }
-
-// Main class that processes the information taken by the user
-data class BirdTip(
-    val card_id: String,
-    val card_name: String,
-    val card_description: String,
-    val card_category: String,
-    val card_cover_img: String? = R.drawable.bird2.toString(),
-    val content: List<Birds> = emptyList()
-)
-
-// Bird species card details class
-data class Birds(
-    val bird_name: String = "",
-    val bird_species: List<String> = emptyList(),
-    val gender: String = "",
-    val color: List<String> = emptyList(),
-    val location: String = "",
-    val timestamp: Timestamp = Timestamp.now(),
-    val images: List<String> = emptyList(),
-    val feed: List<BirdFeed> = emptyList(),
-    val bird_description: List<String> = emptyList(),
-    val relatedSpecies: List<Birds> = emptyList(),
-    val hotspots: List<Location> = emptyList()
-)
-
-// Object used to store the location where birds are found
-data object Location {
-    var LONGITUDE = ""
-    var LATITUDE = ""
-}
-
-// Data class for retrieving feed data
-data class BirdFeed(
-    val feed_id: Int = 0,
-    val feed_name: String,
-    val feed_grown: List<String> = emptyList(),
-    val description: List<String>,
-    val species_specific: List<String>,
-    val feed_images: List<String> = emptyList(),
-    val location: List<Location> = emptyList(),
-)
-
+//
+//// Main class that processes the information taken by the user
+//data class BirdTip(
+//    val card_id: String,
+//    val card_name: String,
+//    val card_description: String,
+//    val card_category: String,
+//    val card_cover_img: String? = R.drawable.bird2.toString(),
+//    val content: List<Birds> = emptyList()
+//)
+//
+//// Bird species card details class
+//data class Birds(
+//    val bird_name: String = "",
+//    val bird_species: List<String> = emptyList(),
+//    val gender: String = "",
+//    val color: List<String> = emptyList(),
+//    val location: String = "",
+//    val timestamp: Timestamp = Timestamp.now(),
+//    val images: List<String> = emptyList(),
+//    val feed: List<BirdFeed> = emptyList(),
+//    val bird_description: List<String> = emptyList(),
+//    val relatedSpecies: List<Birds> = emptyList(),
+//    val hotspots: List<Location> = emptyList()
+//)
+//
+//// Object used to store the location where birds are found
+//data object Location {
+//    var LONGITUDE = ""
+//    var LATITUDE = ""
+//}
+//
+//// Data class for retrieving feed data
+//data class BirdFeed(
+//    val feed_id: Int = 0,
+//    val feed_name: String,
+//    val feed_grown: List<String> = emptyList(),
+//    val description: List<String>,
+//    val species_specific: List<String>,
+//    val feed_images: List<String> = emptyList(),
+//    val location: List<Location> = emptyList(),
+//)
+//
