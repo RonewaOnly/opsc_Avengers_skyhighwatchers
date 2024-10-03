@@ -238,6 +238,7 @@ fun updateAppLocale(context: Context, languageCode: String) {
     Locale.setDefault(locale)
     val config = Configuration(context.resources.configuration)
     config.setLocale(locale)
+    @Suppress("DEPRECATION")
     context.resources.updateConfiguration(config, context.resources.displayMetrics)
 
     // Forcefully recreate the current activity to apply the new locale
