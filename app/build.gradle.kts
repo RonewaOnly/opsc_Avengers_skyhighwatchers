@@ -72,6 +72,10 @@ android {
 }
 
 dependencies {
+    // Import the Firebase BoM
+    implementation (platform("com.google.firebase:firebase-bom:32.2.0")) // Adjust to latest version
+    // Add the dependency for Firebase Storage
+    implementation ("com.google.firebase:firebase-storage")
     // Map Box
     implementation("com.mapbox.maps:android:11.6.1")
     implementation("com.mapbox.extension:maps-compose:11.6.1")
