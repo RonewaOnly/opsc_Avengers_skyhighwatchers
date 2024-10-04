@@ -5,19 +5,24 @@ import android.net.Uri
 import android.widget.Toast
 import com.example.skyhigh_prototype.Data.BirdTip
 import com.example.skyhigh_prototype.Data.Birds
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.toObjects
 import com.google.firebase.storage.FirebaseStorage
 import java.util.UUID
 
-class DatabaseHandler(context:Context){
+class DatabaseHandler{
     val db = FirebaseFirestore.getInstance()
     private val storage = FirebaseStorage.getInstance()
+    lateinit var auth : FirebaseAuth
 
 
     fun createCollection(birdTip: BirdTip,context: Context){
-
-        db.collection("birdCollections")
+        auth = FirebaseAuth.getInstance()
+        val userID = auth.currentUser?.uid.toString()
+        birdTip.card_id = db.collection("Bird Collection").document().id//will be generating for the Cards collection for the specific breeds or group of birds the user will be looking for.
+        db.collection("Users").document(userID).collection("Bird Collection")
             .add(birdTip)
             .addOnSuccessListener {
                 Toast.makeText(context, "Collection saved successfully!", Toast.LENGTH_SHORT).show()
@@ -27,7 +32,7 @@ class DatabaseHandler(context:Context){
             }
     }
     fun addObservation(card_id:String,updatedContent:List<BirdTip>,context:Context,onSave: ()->Unit){
-        db.collection("birdCollections").document(card_id)
+        db.collection("Bird Collection").document(card_id)
             .update("content", updatedContent)
             .addOnSuccessListener {
                 Toast.makeText(context, "Observation added successfully!", Toast.LENGTH_SHORT).show()
@@ -92,7 +97,7 @@ class DatabaseHandler(context:Context){
         onSuccess: () -> Unit,
         onFailure: (Exception) -> Unit
     ) {
-        db.collection("birdCollections").document(cardId)
+        db.collection("Bird Collection").document(cardId)
             .update("content", FieldValue.arrayUnion(bird))
             .addOnSuccessListener {
                 Toast.makeText(context, "Observation added successfully!", Toast.LENGTH_SHORT).show()
@@ -103,9 +108,30 @@ class DatabaseHandler(context:Context){
                 onFailure(exception) // Trigger error callback
             }
     }
+    //this function will be used for the personalCollection page only has on that will be fetching and displaying the current cards created.
+    fun fetchCards(onSuccess: (List<BirdTip>) -> Unit, onError: (String) -> Unit) {
+        auth = FirebaseAuth.getInstance()
+        val userID = auth.currentUser?.uid.toString()
+
+        // Fetch user's bird collection
+        db.collection("Users").document(userID).collection("Bird Collection")
+            .get()
+            .addOnSuccessListener { querySnapshot ->
+                val cards = querySnapshot.map { document ->
+                    val birdTip = document.toObject(BirdTip::class.java)
+                    birdTip.card_id = document.id // Assign the document ID (card_id)
+                    birdTip
+                }
+                onSuccess(cards) // Return the list of BirdTips with card_id
+            }
+            .addOnFailureListener { exception ->
+                onError(exception.message ?: "Unknown error occurred")
+            }
+    }
+
     // Function to fetch collection details
     fun fetchCollection(cardId: String, onSuccess: (List<Birds>) -> Unit, onFailure: (Exception) -> Unit) {
-        db.collection("birdCollections").document(cardId)
+        db.collection("Bird Collection").document(cardId)
             .get()
             .addOnSuccessListener { documentSnapshot ->
                 val birdList = documentSnapshot.toObject(BirdTip::class.java)?.content ?: emptyList()
@@ -123,7 +149,7 @@ class DatabaseHandler(context:Context){
         onSuccess: () -> Unit,
         onFailure: (Exception) -> Unit
     ) {
-        db.collection("birdCollections").document(cardId)
+        db.collection("Bird Collection").document(cardId)
             .update(field, value)
             .addOnSuccessListener {
                 onSuccess() // Trigger callback on success
@@ -135,7 +161,7 @@ class DatabaseHandler(context:Context){
 
     // Function to delete an observation from a card
     fun deleteObservation(cardId: String, bird: Birds,context: Context, onSuccess: () -> Unit, onFailure: (Exception) -> Unit) {
-        db.collection("birdCollections").document(cardId)
+        db.collection("Bird Collection").document(cardId)
             .update("content", FieldValue.arrayRemove(bird))
             .addOnSuccessListener {
                 Toast.makeText(context, "Observation deleted successfully!", Toast.LENGTH_SHORT).show()
