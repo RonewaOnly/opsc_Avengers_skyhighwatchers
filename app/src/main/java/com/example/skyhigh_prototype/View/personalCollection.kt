@@ -1,6 +1,8 @@
 package com.example.skyhigh_prototype.View
 
-//import com.example.skyhigh_prototype.CameraApp
+import android.content.Context
+import android.location.Location
+import android.net.Uri
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.Image
@@ -10,6 +12,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -17,26 +20,32 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Call
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Send
 import androidx.compose.material3.Button
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.InputChip
-import androidx.compose.material3.InputChipDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -54,14 +63,14 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.example.skyhigh_prototype.Data.BirdTip
-import com.example.skyhigh_prototype.Data.Location
+import com.example.skyhigh_prototype.Data.Birds
 import com.example.skyhigh_prototype.Model.CameraApp
 import com.example.skyhigh_prototype.Model.DatabaseHandler
 import com.example.skyhigh_prototype.Model.LocationScreen
 import com.example.skyhigh_prototype.Model.LocationViewModel
+import com.example.skyhigh_prototype.Model.currentLocations
 import com.example.skyhigh_prototype.R
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestore
+
 
 val DatabaseClass = DatabaseHandler()//this the global calling of the object for the class handling the process through the firestore
 
@@ -75,10 +84,9 @@ fun PersonalCollection() {
         DatabaseClass.fetchCards(onSuccess = { card ->
             newObject = card
         }, onError = {
-            Toast.makeText(context, it,Toast.LENGTH_SHORT).show();
+            Toast.makeText(context, it,Toast.LENGTH_SHORT).show()
         })
-
-        Log.d("The cards fetched: ", "${newObject.size}");
+        Log.d("The cards fetched: ", "${newObject.size}")
     }
     LazyVerticalGrid(
         columns = GridCells.Fixed(3),
@@ -121,12 +129,11 @@ fun PersonalCollection() {
     newObject.forEach {
         if (editButton) {
             it.card_id?.let { it1 ->
-                EditCard(card_id = it1, card_details = newObject)
+                EditCard(card_id = it1, card_details = newObject,DatabaseClass,context)
             }
         }
     }
-    Log.d("The cards fetched after: ", "${newObject.size}");
-
+    Log.d("The cards fetched after: ", "${newObject.size}")
 }
 
 @Composable
@@ -265,134 +272,168 @@ fun ViewCard(tips: List<BirdTip>, editButton: (Boolean)->Unit) {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun EditCard(card_id: String, card_details: List<BirdTip>) {
-    var enabled by remember { mutableStateOf(true) }
-    var mediaButton by remember { mutableStateOf(false) }
-
+fun EditCard(
+    card_id: String,
+    card_details: List<BirdTip>,
+    databaseHandler: DatabaseHandler, // Injected DatabaseHandler
+    context: Context
+) {
     var birdName by remember { mutableStateOf("") }
     var birdDescription by remember { mutableStateOf("") }
+    var mediaButton by remember { mutableStateOf(false) }
+    var imageUri: Uri? by remember { mutableStateOf(null) } // To store selected image URI
+    var videoUri: Uri? by remember { mutableStateOf(null) } // To store selected video URI
 
-    val bird_found = Location
-    Log.d("In the edit screen: ", "${card_details.size}");
+    // Find the card with the given ID
+    val selectedCard = card_details.find { it.card_id == card_id }
+    LazyColumn {
 
-    card_details.forEach { tip ->
-        if (tip.card_id == card_id) {
-            Log.d("tHE ONE OPENED: ", tip.card_name);
-            Log.d("tHE ONE OPENED WITH ID: ", tip.card_id!!);
+    }
+    if (selectedCard != null) {
+        // Initialize birds data for editing
+        var birdObservation by remember { mutableStateOf(Birds()) } // Stores bird observation details
 
-            LazyColumn(
+        // Main layout
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState()) // Enable scrolling
+                .background(Color(0xFFF6F7FB)) // Light background
+                .padding(16.dp)
+        ) {
+            // Top bar with navigation and actions
+            TopAppBar(
+                title = { Text(selectedCard.card_name, style = MaterialTheme.typography.titleSmall) },
+                navigationIcon = {
+                    IconButton(onClick = { /* TODO: Handle back navigation */ }) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    }
+                },
+                actions = {
+                    IconButton(onClick = { /* TODO: Handle more actions */ }) {
+                        Icon(Icons.Default.MoreVert, contentDescription = "More options")
+                    }
+                },
+//                backgroundColor = MaterialTheme.colorScheme.primary,
+//                contentColor = Color.White
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            // Bird name input
+            TextField(
+                value = birdName,
+                onValueChange = { birdName = it },
+                label = { Text("Bird Name") },
                 modifier = Modifier
-                    .height(500.dp)
-                    .background(Color.White)
-                    .padding(top = 60.dp)
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp),
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = Color.White, // Replaces backgroundColor
+                    unfocusedContainerColor = Color.White, // Ensure consistency when not focused
+                    focusedIndicatorColor = MaterialTheme.colorScheme.primary,
+                    unfocusedIndicatorColor = Color.LightGray
+                )
+            )
+            // Bird description input
+            TextField(
+                value = birdDescription,
+                onValueChange = { birdDescription = it },
+                label = { Text("Bird Description") },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp),
+//                colors = Color(
+//
+//                    backgroundColor = Color.White,
+//                    focusedIndicatorColor = MaterialTheme.colorScheme.primary,
+//                    unfocusedIndicatorColor = Color.LightGray,
+//
+//                ),
+                maxLines = 3
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Location section
+            LocationScreen(viewModel = LocationViewModel())  // Assuming this is a custom composable that works
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Media button to select or capture image/video
+            Button(
+                onClick = { mediaButton = true }, // Toggle media options
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp),
+//                colors = ButtonDefaults.buttonColors(
+//                    backgroundColor = MaterialTheme.colorScheme.primary,
+//                    contentColor = Color.White
+//                ),
+                shape = RoundedCornerShape(8.dp)
             ) {
-                item {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(30.dp)
-                            .background(Color.Red, RectangleShape),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Absolute.SpaceBetween
-                    ) {
-                        IconButton(onClick = { /* TODO: Handle back navigation */ }) {
-                            Icon(imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft, contentDescription = null)
-                        }
-                        Text(text = tip.card_name+"Name")
-                        IconButton(onClick = {  }) {
-                            Icon(imageVector = Icons.Filled.MoreVert, contentDescription = null)
-                        }
-                    }
+                Icon(Icons.Default.Call, contentDescription = "Camera", modifier = Modifier.padding(end = 8.dp))
+                Text("Capture Media")
+            }
 
-                    TextField(value = birdName, onValueChange = {birdName = it}, label = { Text(text = "Enter bird's name") })
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(Color.LightGray)
-                    ) {
-                        LazyRow {
-                            item {
-                                if (enabled) {
-                                    InputChip(
-                                        onClick = { enabled = !enabled },
-                                        label = { Text("hi") },
-                                        selected = enabled,
-                                        trailingIcon = {
-                                            Icon(
-                                                Icons.Default.Close,
-                                                contentDescription = "Localized description",
-                                                Modifier.size(InputChipDefaults.AvatarSize)
-                                            )
-                                        },
-                                    )
-                                }
-                            }
+            // Show Camera composable when media button is clicked (media options available)
+            if (mediaButton) {
+                CameraApp()
+                CameraApp(
+                    onImageCaptured = { uri -> imageUri = uri },
+                    onVideoCaptured = { uri -> videoUri = uri }
+                )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Save button to update observation
+            Button(
+                onClick = {
+                    val bird = Birds(
+                        bird_name = birdName,
+                        bird_description = listOf(birdDescription),
+                        images = if (imageUri != null) listOf(imageUri.toString()) else emptyList(),
+                        videos = if (videoUri != null) listOf(videoUri.toString()) else emptyList(),
+                        location = currentLocations.toString()   // You can update it with actual data
+                    )
+
+                    // Call DatabaseHandler to save the observation
+                    databaseHandler.updateCardWithObservation(
+                        cardId = card_id,
+                        bird = bird,
+                        imageUri = imageUri,
+                        videoUri = videoUri,
+                        context = context,
+                        onSuccess = {
+                            Toast.makeText(context, "Observation saved!", Toast.LENGTH_SHORT).show()
+                        },
+                        onFailure = { exception ->
+                            Toast.makeText(context, "Failed to save observation: ${exception.message}", Toast.LENGTH_SHORT).show()
                         }
-                    }
-                    TextField(value = birdDescription, onValueChange = {birdDescription = it}, label = { Text(text = "Enter bird description.") })
-//                    bird_found.LATITUDE = "54°45′N"
-//                    bird_found.LONGITUDE = "55°58′E"
-                    //Text(text = "LATITUDE: ${bird_found.LATITUDE}, LONGITUDE: ${bird_found.LONGITUDE}")
-                    LocationScreen(viewModel = LocationViewModel())
-                    Button(onClick = { mediaButton = true }) {
-                        Text(text = "Media button")
-                    }
-                    if (mediaButton) {
-                        CameraApp()
-                    }
-
-                    Button(onClick = { /* TODO: Handle save */ }) {
-                        Text(text = "Save")
-                    }
-                }
-                }
-
-        }else {
-            Text(text = "No information found")
+                    )
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp),
+//                colors = ButtonDefaults.buttonColors(
+//                    backgroundColor = MaterialTheme.colorScheme.secondary,
+//                    contentColor = Color.White
+//                ),
+                shape = RoundedCornerShape(8.dp)
+            ) {
+                Icon(Icons.AutoMirrored.Filled.Send, contentDescription = "Save", modifier = Modifier.padding(end = 8.dp))
+                Text("Save")
+            }
+        }
+    } else {
+        // Fallback if no card is found
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(text = "No information found", style = MaterialTheme.typography.bodySmall)
         }
     }
 }
-//
-//// Main class that processes the information taken by the user
-//data class BirdTip(
-//    val card_id: String,
-//    val card_name: String,
-//    val card_description: String,
-//    val card_category: String,
-//    val card_cover_img: String? = R.drawable.bird2.toString(),
-//    val content: List<Birds> = emptyList()
-//)
-//
-//// Bird species card details class
-//data class Birds(
-//    val bird_name: String = "",
-//    val bird_species: List<String> = emptyList(),
-//    val gender: String = "",
-//    val color: List<String> = emptyList(),
-//    val location: String = "",
-//    val timestamp: Timestamp = Timestamp.now(),
-//    val images: List<String> = emptyList(),
-//    val feed: List<BirdFeed> = emptyList(),
-//    val bird_description: List<String> = emptyList(),
-//    val relatedSpecies: List<Birds> = emptyList(),
-//    val hotspots: List<Location> = emptyList()
-//)
-//
-//// Object used to store the location where birds are found
-//data object Location {
-//    var LONGITUDE = ""
-//    var LATITUDE = ""
-//}
-//
-//// Data class for retrieving feed data
-//data class BirdFeed(
-//    val feed_id: Int = 0,
-//    val feed_name: String,
-//    val feed_grown: List<String> = emptyList(),
-//    val description: List<String>,
-//    val species_specific: List<String>,
-//    val feed_images: List<String> = emptyList(),
-//    val location: List<Location> = emptyList(),
-//)
-//
