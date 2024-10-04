@@ -88,6 +88,43 @@ fun CameraApp() {
 }
 
 @Composable
+fun CameraApp(
+    onImageCaptured: (Uri) -> Unit,
+    onVideoCaptured: (Uri) -> Unit
+) {
+    val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
+
+    // Setup camera provider and bind it to the lifecycle
+    val cameraProviderFuture = ProcessCameraProvider.getInstance(context)
+    val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+
+    cameraProviderFuture.addListener({
+        val cameraProvider = cameraProviderFuture.get()
+
+        // Preview use case setup
+        val preview = Preview.Builder().build()
+
+        // Image capture use case setup
+        val imageCapture = ImageCapture.Builder().build()
+
+        // Bind camera to lifecycle and setup preview
+        val camera = cameraProvider.bindToLifecycle(
+            lifecycleOwner,
+            cameraSelector,
+            preview,
+            imageCapture
+        )
+
+        // TODO: Handle image and video capture logic
+    }, ContextCompat.getMainExecutor(context))
+
+    // Placeholder UI: You can replace it with actual camera preview and media controls
+    Text(text = "Camera Preview Goes Here")
+}
+
+
+@Composable
 fun CameraScreen(navController: NavHostController) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
