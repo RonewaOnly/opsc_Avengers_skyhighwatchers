@@ -1,11 +1,11 @@
 [versions]
-agp = "8.5.2" # Android Gradle Plugin
+agp = "8.7.0" # Android Gradle Plugin
 compiler = "1.5.15" # Compose Compiler
 coreSplashscreen = "1.0.1"
 facebookLogin = "11.2.0"
 firebaseAuthVersion = "23.0.0"
 firebaseBom = "33.3.0"
-gradle = "8.0.2" # Gradle Version
+gradle = "8.7.0" # Gradle Version
 kotlin = "2.0.0" # Kotlin Version
 coreKtx = "1.13.1"
 junit = "4.13.2"
