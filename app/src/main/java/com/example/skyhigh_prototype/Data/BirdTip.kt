@@ -1,7 +1,6 @@
 package com.example.skyhigh_prototype.Data
 
 import com.example.skyhigh_prototype.R
-import com.example.skyhigh_prototype.View.Birds
 
 // Main class that processes the information taken by the user
 data class BirdTip(
