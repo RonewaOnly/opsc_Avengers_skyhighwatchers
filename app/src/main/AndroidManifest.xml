@@ -37,9 +37,6 @@
             android:name="MAPBOX_ACCESS_TOKEN"
             android:value= "sk.eyJ1Ijoic3R1ZGVudHN0YXIiLCJhIjoiY2x6bGh4NGp5MDJ4bjJqc2lsNThicmV6dSJ9.Oe_UCSkcsmXOJlwLIVzbMg" />
         <activity
-            android:name=".MainActivity2"
-            android:exported="false" />
-        <activity
             android:name=".MainActivity"
             android:exported="true"
             android:theme="@style/Theme.SkyHigh_prototype" >
