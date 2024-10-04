@@ -1,5 +1,6 @@
 package com.example.skyhigh_prototype.Data
 
+import com.example.skyhigh_prototype.View.Location
 
 // Data class for retrieving feed data
 data class BirdFeed(

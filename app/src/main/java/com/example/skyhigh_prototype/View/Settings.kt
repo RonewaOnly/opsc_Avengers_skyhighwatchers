@@ -118,6 +118,8 @@ fun Settings(navController: NavController) {
 fun navigateToGeneralSettings(navController: NavController, isDarkTheme: Boolean, onThemeChange: (Boolean) -> Unit) {
     val context = LocalContext.current
     var notificationsEnabled by remember { mutableStateOf(true) }
+    //variable for metric system change
+    var useKilometers by remember {mutableStateOf(true)}
 
     Column(
         modifier = Modifier
@@ -153,6 +155,18 @@ fun navigateToGeneralSettings(navController: NavController, isDarkTheme: Boolean
                 textAlign = TextAlign.Center
             )
         }
+        Spacer(modifier = Modifier.height(20.dp))
+
+        // Distance unit section : Metric or imperial
+        Text(text = "Distance", style = MaterialTheme.typography.titleSmall)
+        Switch(
+            checked = useKilometers,
+            onCheckedChange = { useKilometers = it }
+        )
+        Text(
+            text = if (useKilometers) "Kilometers" else "Miles",
+            style = MaterialTheme.typography.bodyMedium
+        )
         Spacer(modifier = Modifier.height(20.dp))
 
         // Language Settings Section

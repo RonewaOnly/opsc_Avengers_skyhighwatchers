@@ -1,6 +1,7 @@
 package com.example.skyhigh_prototype.Data
 
-
+import com.example.skyhigh_prototype.View.BirdFeed
+import com.example.skyhigh_prototype.View.Location
 import com.google.firebase.Timestamp
 
 // Bird species card details class
