@@ -1,10 +1,21 @@
 package com.example.skyhigh_prototype.View
 
+//import com.example.skyhigh_prototype.CameraApp
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -13,12 +24,25 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.InputChip
+import androidx.compose.material3.InputChipDefaults
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -32,22 +56,30 @@ import androidx.compose.ui.window.Dialog
 import com.example.skyhigh_prototype.Data.BirdTip
 import com.example.skyhigh_prototype.Data.Location
 import com.example.skyhigh_prototype.Model.CameraApp
+import com.example.skyhigh_prototype.Model.DatabaseHandler
 import com.example.skyhigh_prototype.Model.LocationScreen
 import com.example.skyhigh_prototype.Model.LocationViewModel
-//import com.example.skyhigh_prototype.CameraApp
 import com.example.skyhigh_prototype.R
-import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 
+val DatabaseClass = DatabaseHandler()//this the global calling of the object for the class handling the process through the firestore
 
 @Composable
 fun PersonalCollection() {
     val onClick = remember { mutableStateOf(false) }
     var newObject by remember { mutableStateOf(listOf<BirdTip>()) }
     var editButton by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    LaunchedEffect(Unit) {
+        DatabaseClass.fetchCards(onSuccess = { card ->
+            newObject = card
+        }, onError = {
+            Toast.makeText(context, it,Toast.LENGTH_SHORT).show();
+        })
 
-
+        Log.d("The cards fetched: ", "${newObject.size}");
+    }
     LazyVerticalGrid(
         columns = GridCells.Fixed(3),
         modifier = Modifier
@@ -86,10 +118,15 @@ fun PersonalCollection() {
             }
         )
     }
-
-    if (editButton) {
-        EditCard(card_id = "card_1", card_details = newObject)
+    newObject.forEach {
+        if (editButton) {
+            it.card_id?.let { it1 ->
+                EditCard(card_id = it1, card_details = newObject)
+            }
+        }
     }
+    Log.d("The cards fetched after: ", "${newObject.size}");
+
 }
 
 @Composable
@@ -98,8 +135,8 @@ fun CreateCard(onClose: () -> Unit, onSave: (BirdTip) -> Unit) {
     var cardDescription by remember { mutableStateOf("") }
     var birdType by remember { mutableStateOf("") }
     //firebase instances
-    var auth : FirebaseAuth
-    var firestore: FirebaseFirestore
+//    var auth : FirebaseAuth
+//    var firestore: FirebaseFirestore
 
     val context = LocalContext.current
 
@@ -140,37 +177,40 @@ fun CreateCard(onClose: () -> Unit, onSave: (BirdTip) -> Unit) {
                     modifier = Modifier.padding(top = 20.dp)
                 )
                 OutlinedButton(onClick = {
-
-                    //initialize
-                    auth = FirebaseAuth.getInstance()
-                    firestore = FirebaseFirestore.getInstance()
-
-                    //user id
-                    val userID = auth.currentUser?.uid.toString()
-
-                    //adding to hash map
-                    val birdCollection = hashMapOf(
-
-                        "Collection Name" to cardName,
-                        "Card Description" to cardDescription,
-                        "Bird Type" to birdType
-                    )
-
-                    //adding to firestore collection to a user with their id
-                    firestore.collection("Users").document(userID).collection("Bird Collection").add(birdCollection).addOnSuccessListener {
-
-                        //toast message
-                        Toast.makeText(context, "Save Collection", Toast.LENGTH_LONG).show()
-
-                    }.addOnFailureListener {
-
-                        //toast message
-                        Toast.makeText(context, "Unable to save collection", Toast.LENGTH_LONG).show()
-                    }
+// We will be using an object reference to call function dealing with the storing to the database.
+                DatabaseClass.createCollection(birdTip =
+                BirdTip(
+                    card_name = cardName,
+                    card_description = cardDescription,
+                    card_category = birdType
+                ), context = context, )
+//                    //initialize
+//                    auth = FirebaseAuth.getInstance()
+//                    firestore = FirebaseFirestore.getInstance()
+//
+//                    //user id
+//                    val userID = auth.currentUser?.uid.toString()
+//
+//                    //adding to hash map
+//                    val birdCollection = hashMapOf(
+//
+//                        "Collection Name" to cardName,
+//                        "Card Description" to cardDescription,
+//                        "Bird Type" to birdType
+//                    )
+//
+//                    //adding to firestore collection to a user with their id
+//                    firestore.collection("Users").document(userID).collection("Bird Collection").add(birdCollection).addOnSuccessListener {
+//                        //toast message
+//                        Toast.makeText(context, "Save Collection", Toast.LENGTH_LONG).show()
+//
+//                    }.addOnFailureListener {
+//                        //toast message
+//                        Toast.makeText(context, "Unable to save collection", Toast.LENGTH_LONG).show()
+//                    }
 
                     onSave(
                         BirdTip(
-                            card_id = "card_1",
                             card_name = cardName,
                             card_description = cardDescription,
                             card_category = birdType
@@ -230,10 +270,17 @@ fun EditCard(card_id: String, card_details: List<BirdTip>) {
     var enabled by remember { mutableStateOf(true) }
     var mediaButton by remember { mutableStateOf(false) }
 
+    var birdName by remember { mutableStateOf("") }
+    var birdDescription by remember { mutableStateOf("") }
+
     val bird_found = Location
+    Log.d("In the edit screen: ", "${card_details.size}");
 
     card_details.forEach { tip ->
         if (tip.card_id == card_id) {
+            Log.d("tHE ONE OPENED: ", tip.card_name);
+            Log.d("tHE ONE OPENED WITH ID: ", tip.card_id!!);
+
             LazyColumn(
                 modifier = Modifier
                     .height(500.dp)
@@ -250,15 +297,15 @@ fun EditCard(card_id: String, card_details: List<BirdTip>) {
                         horizontalArrangement = Arrangement.Absolute.SpaceBetween
                     ) {
                         IconButton(onClick = { /* TODO: Handle back navigation */ }) {
-                            Icon(imageVector = Icons.Filled.KeyboardArrowLeft, contentDescription = null)
+                            Icon(imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft, contentDescription = null)
                         }
-                        Text(text = tip.card_name)
+                        Text(text = tip.card_name+"Name")
                         IconButton(onClick = {  }) {
                             Icon(imageVector = Icons.Filled.MoreVert, contentDescription = null)
                         }
                     }
 
-                    TextField(value = "", onValueChange = {}, label = { Text(text = "Enter bird's name") })
+                    TextField(value = birdName, onValueChange = {birdName = it}, label = { Text(text = "Enter bird's name") })
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -283,9 +330,9 @@ fun EditCard(card_id: String, card_details: List<BirdTip>) {
                             }
                         }
                     }
-                    TextField(value = "", onValueChange = {}, label = { Text(text = "Enter bird description.") })
-                    bird_found.LATITUDE = "54°45′N"
-                    bird_found.LONGITUDE = "55°58′E"
+                    TextField(value = birdDescription, onValueChange = {birdDescription = it}, label = { Text(text = "Enter bird description.") })
+//                    bird_found.LATITUDE = "54°45′N"
+//                    bird_found.LONGITUDE = "55°58′E"
                     //Text(text = "LATITUDE: ${bird_found.LATITUDE}, LONGITUDE: ${bird_found.LONGITUDE}")
                     LocationScreen(viewModel = LocationViewModel())
                     Button(onClick = { mediaButton = true }) {
