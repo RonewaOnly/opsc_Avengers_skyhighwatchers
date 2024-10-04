@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
 import android.location.Location
+import android.util.Log
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.core.app.ActivityCompat
@@ -18,6 +19,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
+val currentLocations = com.example.skyhigh_prototype.Data.Location
 
 class LocationViewModel : ViewModel() {
     private val _location = MutableStateFlow<Location?>(null)
@@ -54,6 +56,7 @@ class LocationViewModel : ViewModel() {
                     viewModelScope.launch {
                         _location.emit(location)
                     }
+                    Log.d("LOCATION CURRENT USER: ",_location.toString());
                 }
             }
         }
@@ -79,5 +82,8 @@ fun LocationScreen(viewModel: LocationViewModel) {
     // Use the location value in your UI
     location?.let { loc ->
         Text("Latitude: ${loc.latitude}, Longitude: ${loc.longitude}")
+        currentLocations.LATITUDE = loc.latitude
+        currentLocations.LONGITUDE = loc.longitude
+
     }
 }

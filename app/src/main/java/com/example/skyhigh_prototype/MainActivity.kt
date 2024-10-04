@@ -44,6 +44,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.skyhigh_prototype.Model.BirdViewModel
 import com.example.skyhigh_prototype.Model.MapboxViewModel
+import com.example.skyhigh_prototype.Model.currentLocations
 import com.example.skyhigh_prototype.View.ForgotPassword
 import com.example.skyhigh_prototype.View.Login
 import com.example.skyhigh_prototype.View.Main
@@ -77,7 +78,7 @@ class MainActivity : ComponentActivity() {
         val apiKey = getString(R.string.ebird_api_key)
 
         // Fetch bird observations (example latitude and longitude)
-        viewModel.getRecentBirdObservations(37.7749, -122.4194, apiKey)
+        viewModel.getRecentBirdObservations(currentLocations.LATITUDE, currentLocations.LONGITUDE, apiKey)
         setContent {
             val navController = rememberNavController()
 
