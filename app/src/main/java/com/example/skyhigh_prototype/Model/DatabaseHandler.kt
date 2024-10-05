@@ -31,18 +31,27 @@ class DatabaseHandler{
                 Toast.makeText(context, "Error saving collection: ${it.message}", Toast.LENGTH_SHORT).show()
             }
     }
-    fun addObservation(card_id:String,updatedContent:List<BirdTip>,context:Context,onSave: ()->Unit){
-        db.collection("Bird Collection").document(card_id)
-            .update("content", updatedContent)
-            .addOnSuccessListener {
-                Toast.makeText(context, "Observation added successfully!", Toast.LENGTH_SHORT).show()
-                onSave()  // Callback to refresh or close after save
-            }
-            .addOnFailureListener {
-                Toast.makeText(context, "Failed to add observation: ${it.message}", Toast.LENGTH_SHORT).show()
-            }
-    }
+    fun addObservation(card_id: String, newObservation: Birds, context: Context, onSave: () -> Unit) {
+        auth = FirebaseAuth.getInstance()
+        val userID = auth.currentUser?.uid
 
+        // Check if user is authenticated
+        if (userID != null) {
+            // Use arrayUnion to add new observation to the 'content' array
+            db.collection("Users").document(userID).collection("Bird Collection")
+                .document(card_id)
+                .update("content", FieldValue.arrayUnion(newObservation))  // Appends the new observation
+                .addOnSuccessListener {
+                    Toast.makeText(context, "Observation added successfully!", Toast.LENGTH_SHORT).show()
+                    onSave()  // Callback to refresh or close after save
+                }
+                .addOnFailureListener { e ->
+                    Toast.makeText(context, "Failed to add observation: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
+        } else {
+            Toast.makeText(context, "User not authenticated", Toast.LENGTH_SHORT).show()
+        }
+    }
     // Function to update bird observation with image and video
     fun updateCardWithObservation(
         cardId: String,
