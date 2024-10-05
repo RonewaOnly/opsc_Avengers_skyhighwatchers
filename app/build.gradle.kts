@@ -131,6 +131,9 @@ dependencies {
 
     // Kotlin Coroutines
     implementation(libs.kotlinx.coroutines.android)
+    implementation ("androidx.concurrent:concurrent-futures-ktx:1.1.0")
+    implementation ("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.6.0") // Or the latest version
+
 
     implementation("androidx.compose.material:material:1.7.1")
 
