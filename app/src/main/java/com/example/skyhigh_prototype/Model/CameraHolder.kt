@@ -3,6 +3,7 @@
 package com.example.skyhigh_prototype.Model
 
 import android.Manifest
+import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.media.MediaMetadataRetriever
@@ -50,6 +51,7 @@ import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.concurrent.futures.await
 import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
 import androidx.media3.common.MediaItem
@@ -88,43 +90,6 @@ fun CameraApp() {
 }
 
 @Composable
-fun CameraApp(
-    onImageCaptured: (Uri) -> Unit,
-    onVideoCaptured: (Uri) -> Unit
-) {
-    val context = LocalContext.current
-    val lifecycleOwner = LocalLifecycleOwner.current
-
-    // Setup camera provider and bind it to the lifecycle
-    val cameraProviderFuture = ProcessCameraProvider.getInstance(context)
-    val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
-
-    cameraProviderFuture.addListener({
-        val cameraProvider = cameraProviderFuture.get()
-
-        // Preview use case setup
-        val preview = Preview.Builder().build()
-
-        // Image capture use case setup
-        val imageCapture = ImageCapture.Builder().build()
-
-        // Bind camera to lifecycle and setup preview
-        val camera = cameraProvider.bindToLifecycle(
-            lifecycleOwner,
-            cameraSelector,
-            preview,
-            imageCapture
-        )
-
-        // TODO: Handle image and video capture logic
-    }, ContextCompat.getMainExecutor(context))
-
-    // Placeholder UI: You can replace it with actual camera preview and media controls
-    Text(text = "Camera Preview Goes Here")
-}
-
-
-@Composable
 fun CameraScreen(navController: NavHostController) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -137,6 +102,7 @@ fun CameraScreen(navController: NavHostController) {
     var hasCameraPermission by remember { mutableStateOf(false) }
     var hasAudioPermission by remember { mutableStateOf(false) }
 
+    // Permission launcher for camera and audio
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
@@ -144,11 +110,14 @@ fun CameraScreen(navController: NavHostController) {
         hasAudioPermission = permissions[Manifest.permission.RECORD_AUDIO] == true
     }
 
+    // Request permissions
     LaunchedEffect(Unit) {
-        permissionLauncher.launch(arrayOf(
-            Manifest.permission.CAMERA,
-            Manifest.permission.RECORD_AUDIO
-        ))
+        permissionLauncher.launch(
+            arrayOf(
+                Manifest.permission.CAMERA,
+                Manifest.permission.RECORD_AUDIO
+            )
+        )
     }
 
     if (hasCameraPermission && hasAudioPermission) {
@@ -223,10 +192,130 @@ fun CameraScreen(navController: NavHostController) {
     }
 }
 
+@Composable
+fun CameraPreviewScreen(
+    onImageCaptured: (Uri) -> Unit,
+    onVideoCaptured: (Uri) -> Unit
+) {
+    val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val cameraProviderFuture = remember { ProcessCameraProvider.getInstance(context) }
+    val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+
+    // Use states to manage capture and recording
+    var imageCapture: ImageCapture? by remember { mutableStateOf(null) }
+    var videoCapture: VideoCapture<Recorder>? by remember { mutableStateOf(null) }
+    var recording: Recording? by remember { mutableStateOf(null) }
+    var isRecording by remember { mutableStateOf(false) }
+
+    // Camera initialization
+    LaunchedEffect(cameraProviderFuture) {
+        try {
+            val cameraProvider = cameraProviderFuture.await()
+            val preview = Preview.Builder().build()
+
+            imageCapture = ImageCapture.Builder().build()
+            val recorder = Recorder.Builder().setQualitySelector(QualitySelector.from(Quality.HIGHEST)).build()
+            videoCapture = VideoCapture.withOutput(recorder)
+
+            cameraProvider.unbindAll()
+
+            cameraProvider.bindToLifecycle(
+                lifecycleOwner,
+                cameraSelector,
+                preview,
+                imageCapture,
+                videoCapture
+            )
+        } catch (e: Exception) {
+            Log.e("CameraPreviewScreen", "Failed to initialize camera", e)
+        }
+    }
+
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        // Preview placeholder
+        Text(text = "Camera Preview Goes Here")
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Capture Image Button
+        Button(onClick = {
+            imageCapture?.let { capture ->
+                val photoFile = File(context.filesDir, "image_${System.currentTimeMillis()}.jpg")
+                val outputOptions = ImageCapture.OutputFileOptions.Builder(photoFile).build()
+
+                capture.takePicture(
+                    outputOptions,
+                    ContextCompat.getMainExecutor(context),
+                    object : ImageCapture.OnImageSavedCallback {
+                        override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
+                            val savedUri = outputFileResults.savedUri ?: Uri.fromFile(photoFile)
+                            onImageCaptured(savedUri)
+                            Log.d("CameraPreviewScreen", "Image captured: $savedUri")
+                        }
+
+                        override fun onError(exception: ImageCaptureException) {
+                            Log.e("CameraPreviewScreen", "Image capture failed", exception)
+                        }
+                    }
+                )
+            }
+        }) {
+            Text(text = "Capture Image")
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Start/Stop Video Recording Button
+        Button(onClick = {
+            videoCapture?.let { capture ->
+                if (isRecording) {
+                    recording?.stop()  // Stop the recording
+                    isRecording = false
+                } else {
+                    val videoFile = File(context.filesDir, "video_${System.currentTimeMillis()}.mp4")
+
+                    // Correct usage: Create FileOutputOptions for video capture
+                    val fileOutputOptions = FileOutputOptions.Builder(videoFile).build()
+
+                    // Prepare the recording with FileOutputOptions and start recording
+                    recording = capture.output
+                        .prepareRecording(context, fileOutputOptions)
+                        .start(ContextCompat.getMainExecutor(context)) { recordEvent ->
+                            when (recordEvent) {
+                                is VideoRecordEvent.Finalize -> {
+                                    if (recordEvent.hasError()) {
+                                        Log.e("CameraPreviewScreen", "Video capture failed: ${recordEvent.cause}")
+                                    } else {
+                                        val savedUri = Uri.fromFile(videoFile)
+                                        onVideoCaptured(savedUri)
+                                        Log.d("CameraPreviewScreen", "Video captured: $savedUri")
+                                    }
+                                }
+                                is VideoRecordEvent.Start -> {
+                                    Log.d("CameraPreviewScreen", "Video recording started")
+                                }
+                            }
+                        }
+
+                    isRecording = true
+                }
+            }
+        }) {
+            Text(text = if (isRecording) "Stop Recording" else "Start Recording")
+        }
+
+    }
+}
+
+
 private fun takePhoto(
     imageCapture: ImageCapture?,
     executor: Executor,
-    context: android.content.Context
+    context: Context
 ) {
     imageCapture?.let {
         val photoFile = createFile(context, "jpg")
@@ -247,14 +336,13 @@ private fun takePhoto(
 private fun startRecording(
     videoCapture: VideoCapture<Recorder>?,
     executor: Executor,
-    context: android.content.Context,
+    context: Context,
     onRecordingStarted: (Recording) -> Unit
 ) {
     val videoFile = createFile(context, "mp4")
     val outputOptions = FileOutputOptions.Builder(videoFile).build()
 
     videoCapture?.let { capture ->
-        // Create a PendingRecording
         val pendingRecording = capture.output.prepareRecording(context, outputOptions)
             .apply {
                 if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
@@ -262,7 +350,6 @@ private fun startRecording(
                 }
             }
 
-        // Start the recording
         val recording = pendingRecording.start(executor) { recordEvent ->
             when (recordEvent) {
                 is VideoRecordEvent.Start -> {
@@ -278,21 +365,22 @@ private fun startRecording(
             }
         }
 
-        // Call the callback with the new recording
         onRecordingStarted(recording)
     }
 }
+
 private fun stopRecording(recording: Recording?, onRecordingStopped: () -> Unit) {
     recording?.stop()
     onRecordingStopped()
 }
 
-fun createFile(context: android.content.Context, extension: String): File {
+fun createFile(context: Context, extension: String): File {
     val mediaDir = context.externalMediaDirs.firstOrNull()?.let {
         File(it, "CameraApp").apply { mkdirs() }
     }
     return File(mediaDir, "${System.currentTimeMillis()}.$extension")
 }
+
 
 @Composable
 fun GalleryScreen(navController: NavHostController) {
