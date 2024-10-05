@@ -1,7 +1,6 @@
 package com.example.skyhigh_prototype.View
 
 import android.content.Context
-import android.location.Location
 import android.net.Uri
 import android.util.Log
 import android.widget.Toast
@@ -34,7 +33,6 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Call
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.Send
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -65,6 +63,7 @@ import androidx.compose.ui.window.Dialog
 import com.example.skyhigh_prototype.Data.BirdTip
 import com.example.skyhigh_prototype.Data.Birds
 import com.example.skyhigh_prototype.Model.CameraApp
+import com.example.skyhigh_prototype.Model.CameraPreviewScreen
 import com.example.skyhigh_prototype.Model.DatabaseHandler
 import com.example.skyhigh_prototype.Model.LocationScreen
 import com.example.skyhigh_prototype.Model.LocationViewModel
@@ -79,6 +78,7 @@ fun PersonalCollection() {
     val onClick = remember { mutableStateOf(false) }
     var newObject by remember { mutableStateOf(listOf<BirdTip>()) }
     var editButton by remember { mutableStateOf(false) }
+    var selectedCardId by remember { mutableStateOf<String?>(null) }
     val context = LocalContext.current
     LaunchedEffect(Unit) {
         DatabaseClass.fetchCards(onSuccess = { card ->
@@ -112,6 +112,7 @@ fun PersonalCollection() {
         items(newObject) { item ->
             ViewCard(tips = listOf(item), editButton={
                 editButton = true
+                selectedCardId = item.card_id
             })
             Spacer(modifier = Modifier.padding(12.dp))
         }
@@ -126,12 +127,9 @@ fun PersonalCollection() {
             }
         )
     }
-    newObject.forEach {
-        if (editButton) {
-            it.card_id?.let { it1 ->
-                EditCard(card_id = it1, card_details = newObject,DatabaseClass,context)
-            }
-        }
+    if (editButton && selectedCardId != null) {
+        EditCard(card_id = selectedCardId!!, card_details = newObject, DatabaseClass, context)
+        Log.d("The clicked card: ", selectedCardId!!)
     }
     Log.d("The cards fetched after: ", "${newObject.size}")
 }
@@ -142,11 +140,9 @@ fun CreateCard(onClose: () -> Unit, onSave: (BirdTip) -> Unit) {
     var cardDescription by remember { mutableStateOf("") }
     var birdType by remember { mutableStateOf("") }
     //firebase instances
-//    var auth : FirebaseAuth
-//    var firestore: FirebaseFirestore
-
+    //    var auth : FirebaseAuth
+    //    var firestore: FirebaseFirestore
     val context = LocalContext.current
-
     Dialog(onDismissRequest = { onClose() }) {
         Surface(
             shape = RoundedCornerShape(25.dp),
@@ -379,7 +375,7 @@ fun EditCard(
             // Show Camera composable when media button is clicked (media options available)
             if (mediaButton) {
                 CameraApp()
-                CameraApp(
+                CameraPreviewScreen(
                     onImageCaptured = { uri -> imageUri = uri },
                     onVideoCaptured = { uri -> videoUri = uri }
                 )
@@ -397,21 +393,31 @@ fun EditCard(
                         videos = if (videoUri != null) listOf(videoUri.toString()) else emptyList(),
                         location = currentLocations.toString()   // You can update it with actual data
                     )
-
-                    // Call DatabaseHandler to save the observation
-                    databaseHandler.updateCardWithObservation(
-                        cardId = card_id,
-                        bird = bird,
-                        imageUri = imageUri,
-                        videoUri = videoUri,
+                    // AddObservation function
+                    databaseHandler.addObservation(
+                        card_id, bird,
                         context = context,
-                        onSuccess = {
+                        onSave = {
                             Toast.makeText(context, "Observation saved!", Toast.LENGTH_SHORT).show()
-                        },
-                        onFailure = { exception ->
-                            Toast.makeText(context, "Failed to save observation: ${exception.message}", Toast.LENGTH_SHORT).show()
                         }
                     )
+                    // Call DatabaseHandler to save the observation
+                    if(imageUri!= null && videoUri != null){
+                        databaseHandler.updateCardWithObservation(
+                            cardId = card_id,
+                            bird = bird,
+                            imageUri = imageUri,
+                            videoUri = videoUri,
+                            context = context,
+                            onSuccess = {
+                                Toast.makeText(context, "Observation update!", Toast.LENGTH_SHORT).show()
+                            },
+                            onFailure = { exception ->
+                                Toast.makeText(context, "Failed to update observation: ${exception.message}", Toast.LENGTH_SHORT).show()
+                                Log.e("Observation pages","Failed to update observation: ${exception.message}")
+                            }
+                        )
+                    }
                 },
                 modifier = Modifier
                     .fillMaxWidth()
