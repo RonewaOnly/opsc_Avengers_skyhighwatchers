@@ -64,6 +64,7 @@ import com.example.skyhigh_prototype.Data.BirdTip
 import com.example.skyhigh_prototype.Data.Birds
 import com.example.skyhigh_prototype.Model.CameraApp
 import com.example.skyhigh_prototype.Model.CameraPreviewScreen
+import com.example.skyhigh_prototype.Model.CaptureScreen
 import com.example.skyhigh_prototype.Model.DatabaseHandler
 import com.example.skyhigh_prototype.Model.LocationScreen
 import com.example.skyhigh_prototype.Model.LocationViewModel
@@ -116,6 +117,7 @@ fun PersonalCollection() {
             })
             Spacer(modifier = Modifier.padding(12.dp))
         }
+
     }
 
     if (onClick.value) {
@@ -284,9 +286,11 @@ fun EditCard(
 
     // Find the card with the given ID
     val selectedCard = card_details.find { it.card_id == card_id }
-    LazyColumn {
 
+    LazyColumn {
+        // Your LazyColumn content goes here if needed
     }
+
     if (selectedCard != null) {
         // Initialize birds data for editing
         var birdObservation by remember { mutableStateOf(Birds()) } // Stores bird observation details
@@ -312,10 +316,10 @@ fun EditCard(
                         Icon(Icons.Default.MoreVert, contentDescription = "More options")
                     }
                 },
-//                backgroundColor = MaterialTheme.colorScheme.primary,
-//                contentColor = Color.White
             )
+
             Spacer(modifier = Modifier.height(16.dp))
+
             // Bird name input
             TextField(
                 value = birdName,
@@ -325,12 +329,13 @@ fun EditCard(
                     .fillMaxWidth()
                     .padding(vertical = 8.dp),
                 colors = TextFieldDefaults.colors(
-                    focusedContainerColor = Color.White, // Replaces backgroundColor
-                    unfocusedContainerColor = Color.White, // Ensure consistency when not focused
+                    focusedContainerColor = Color.White,
+                    unfocusedContainerColor = Color.White,
                     focusedIndicatorColor = MaterialTheme.colorScheme.primary,
                     unfocusedIndicatorColor = Color.LightGray
                 )
             )
+
             // Bird description input
             TextField(
                 value = birdDescription,
@@ -339,13 +344,6 @@ fun EditCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(vertical = 8.dp),
-//                colors = Color(
-//
-//                    backgroundColor = Color.White,
-//                    focusedIndicatorColor = MaterialTheme.colorScheme.primary,
-//                    unfocusedIndicatorColor = Color.LightGray,
-//
-//                ),
                 maxLines = 3
             )
 
@@ -362,10 +360,6 @@ fun EditCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(vertical = 8.dp),
-//                colors = ButtonDefaults.buttonColors(
-//                    backgroundColor = MaterialTheme.colorScheme.primary,
-//                    contentColor = Color.White
-//                ),
                 shape = RoundedCornerShape(8.dp)
             ) {
                 Icon(Icons.Default.Call, contentDescription = "Camera", modifier = Modifier.padding(end = 8.dp))
@@ -374,10 +368,17 @@ fun EditCard(
 
             // Show Camera composable when media button is clicked (media options available)
             if (mediaButton) {
-                CameraApp()
-                CameraPreviewScreen(
-                    onImageCaptured = { uri -> imageUri = uri },
-                    onVideoCaptured = { uri -> videoUri = uri }
+                // Conditionally show the camera capture UI
+                CaptureScreen(
+                    onImageCaptured = { uri ->
+                        imageUri = uri
+                    },
+                    onVideoCaptured = { uri ->
+                        videoUri = uri
+                    },
+                    onError = { error ->
+                        Log.e("EditCard", "Error capturing media: $error")
+                    }
                 )
             }
 
@@ -393,7 +394,7 @@ fun EditCard(
                         videos = if (videoUri != null) listOf(videoUri.toString()) else emptyList(),
                         location = currentLocations.toString()   // You can update it with actual data
                     )
-                    // AddObservation function
+                    // Call DatabaseHandler to save the observation
                     databaseHandler.addObservation(
                         card_id, bird,
                         context = context,
@@ -401,8 +402,8 @@ fun EditCard(
                             Toast.makeText(context, "Observation saved!", Toast.LENGTH_SHORT).show()
                         }
                     )
-                    // Call DatabaseHandler to save the observation
-                    if(imageUri!= null && videoUri != null){
+
+                    if (imageUri != null || videoUri != null) {
                         databaseHandler.updateCardWithObservation(
                             cardId = card_id,
                             bird = bird,
@@ -410,11 +411,11 @@ fun EditCard(
                             videoUri = videoUri,
                             context = context,
                             onSuccess = {
-                                Toast.makeText(context, "Observation update!", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, "Observation updated!", Toast.LENGTH_SHORT).show()
                             },
                             onFailure = { exception ->
                                 Toast.makeText(context, "Failed to update observation: ${exception.message}", Toast.LENGTH_SHORT).show()
-                                Log.e("Observation pages","Failed to update observation: ${exception.message}")
+                                Log.e("Observation pages", "Failed to update observation: ${exception.message}")
                             }
                         )
                     }
@@ -422,10 +423,6 @@ fun EditCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(vertical = 8.dp),
-//                colors = ButtonDefaults.buttonColors(
-//                    backgroundColor = MaterialTheme.colorScheme.secondary,
-//                    contentColor = Color.White
-//                ),
                 shape = RoundedCornerShape(8.dp)
             ) {
                 Icon(Icons.AutoMirrored.Filled.Send, contentDescription = "Save", modifier = Modifier.padding(end = 8.dp))
@@ -443,3 +440,4 @@ fun EditCard(
         }
     }
 }
+
