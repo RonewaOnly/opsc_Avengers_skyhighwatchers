@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -22,12 +23,12 @@ fun MapOption(navController: NavController){
     //val map = MapboxViewModel()
 
     Column(
-        modifier = Modifier.fillMaxSize().padding(top = 20.dp),
+        modifier = Modifier.fillMaxSize().padding(top = 40.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         IconButton(onClick = { navController.navigate("homepage") }) {
-            Icon(imageVector = Icons.Filled.ArrowBack, contentDescription = "")
+            Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "")
         }
         HorizontalDivider()
         Maps()
