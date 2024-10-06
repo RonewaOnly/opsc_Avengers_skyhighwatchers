@@ -384,7 +384,7 @@ fun EditCard(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Save button to update observation
+            // Save button to update observations
             Button(
                 onClick = {
                     val bird = Birds(
