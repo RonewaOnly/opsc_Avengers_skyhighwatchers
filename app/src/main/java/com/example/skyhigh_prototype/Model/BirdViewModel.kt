@@ -19,9 +19,15 @@ import com.example.skyhigh_prototype.Room.HotspotDao
 import com.example.skyhigh_prototype.Room.RegionDao
 import com.example.skyhigh_prototype.Room.TaxonomyDao
 import com.example.skyhigh_prototype.Room.TopBirdsDao
+import com.mapbox.geojson.Point
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okio.IOException
+import org.json.JSONArray
 
 class BirdViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -34,9 +40,10 @@ class BirdViewModel(application: Application) : AndroidViewModel(application) {
     private val _topBirds = MutableStateFlow<List<BirdObservation>>(emptyList())
     val topBirds: StateFlow<List<BirdObservation>> = _topBirds
 
-    private val _hotspot = MutableStateFlow<Hotspot?>(null)
-    val hotspot: StateFlow<Hotspot?> = _hotspot
-
+//    private val _hotspot = MutableStateFlow<Hotspot?>(null)
+//    val hotspot: StateFlow<Hotspot?> = _hotspot
+    private val _hotspot = MutableStateFlow<List<Point>>(emptyList())
+    val hotspot: StateFlow<List<Point>> = _hotspot.asStateFlow()
     private val _taxonomy = MutableStateFlow<List<Taxonomy>>(emptyList())
     val taxonomy: StateFlow<List<Taxonomy>> = _taxonomy
 
@@ -48,6 +55,9 @@ class BirdViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage: StateFlow<String?> = _errorMessage
+
+    private val client = OkHttpClient()
+
 
     private var currentOffset = 0
     private val limit = 20
@@ -130,21 +140,53 @@ class BirdViewModel(application: Application) : AndroidViewModel(application) {
             }
         }
     }
-    fun getHotspotDetails(hotspotId: String, apiKey: String) {
-        viewModelScope.launch {
-            _isLoading.value = true
-            _errorMessage.value = null
-            try {
-                val response = EBirdApiClient.apiService.getHotspotDetails(hotspotId, apiKey)
-                _hotspot.value = response
-            } catch (e: Exception) {
-                _errorMessage.value = "Error fetching hotspot details: ${e.message}"
-            } finally {
+    fun getHotspotByLocation(latitude: Double, longitude: Double, apiKey: String) {
+        _isLoading.value = true
+        val url = "https://api.ebird.org/v2/ref/hotspot/geo?lat=$latitude&lng=$longitude"
+
+        val request = Request.Builder()
+            .url(url)
+            .header("X-eBirdApiToken", apiKey)
+            .build()
+
+        client.newCall(request).enqueue(object : okhttp3.Callback {
+            override fun onFailure(call: okhttp3.Call, e: IOException) {
                 _isLoading.value = false
             }
-        }
+
+            override fun onResponse(call: okhttp3.Call, response: okhttp3.Response) {
+                response.body?.string()?.let { jsonResponse ->
+                    val hotspots = parseHotspots(jsonResponse)
+                    _hotspot.value = hotspots
+                    _isLoading.value = false
+                }
+            }
+        })
     }
 
+    private fun parseHotspots(jsonResponse: String): List<Point> {
+        // Parse JSON response to extract hotspots and their coordinates
+        val hotspots = mutableListOf<Point>()
+
+        val jsonArray = JSONArray(jsonResponse)
+        for (i in 0 until jsonArray.length()) {
+            val hotspot = jsonArray.getJSONObject(i)
+            val lat = hotspot.getDouble("lat")
+            val lng = hotspot.getDouble("lng")
+            hotspots.add(Point.fromLngLat(lng, lat))
+        }
+
+        return hotspots
+    }
+
+    fun getRoute(origin: Point, destination: Point, callback: (List<Point>) -> Unit) {
+        viewModelScope.launch {
+            // Use Mapbox Directions API or similar service to get the route
+            // This is a placeholder implementation
+//            val route = mapboxDirectionsClient.getRoute(origin, destination)
+//            callback(route.geometry().coordinates())
+        }
+    }
     fun getTaxonomy(apiKey: String) {
         viewModelScope.launch {
             _isLoading.value = true
