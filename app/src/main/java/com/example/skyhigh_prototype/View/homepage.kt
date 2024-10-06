@@ -3,6 +3,8 @@
 package com.example.skyhigh_prototype.View
 
 import android.annotation.SuppressLint
+import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -20,6 +22,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddCircle
@@ -50,6 +53,7 @@ import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -74,7 +78,10 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.skyhigh_prototype.Data.Birds
+import com.example.skyhigh_prototype.Data.Location
 import com.example.skyhigh_prototype.Model.BirdViewModel
+import com.example.skyhigh_prototype.Model.DatabaseHandler
 import com.example.skyhigh_prototype.Model.MapboxViewModel
 import com.example.skyhigh_prototype.R
 import com.example.skyhigh_prototype.R.color.dark_blue
@@ -350,7 +357,7 @@ fun Homepage(ebirdViewModel: BirdViewModel) {
     //var enabled by remember { mutableStateOf(true) }
     // State to track the selected tab index
     var selectedTabIndex by remember { mutableIntStateOf(0) }
-
+    val currentLocation = Location
     // Tab titles
     val tabs = listOf("Personal Cards", "Recent Observation", "Tab 3")
     Scaffold { paddingValues ->
@@ -381,7 +388,7 @@ fun Homepage(ebirdViewModel: BirdViewModel) {
             // Show different content based on selected tab
             when (selectedTabIndex) {
                 0 -> TabContent1()
-                1 -> TabContent2(ebirdViewModel,-28.482,109.492, getString(context,R.string.ebird_api_key))
+                1 -> TabContent2(ebirdViewModel,currentLocation.LATITUDE,-currentLocation.LONGITUDE, getString(context,R.string.ebird_api_key))
                 2 -> TabContent3()
             }
         }
@@ -390,6 +397,18 @@ fun Homepage(ebirdViewModel: BirdViewModel) {
 
 @Composable
 fun TabContent1() {
+    val databaseClass = DatabaseHandler() // This is the global calling of the object for the class handling Firestore operations
+    val context = LocalContext.current
+    var birdsObs by remember { mutableStateOf(listOf<Birds>()) }
+
+    LaunchedEffect(Unit) {
+        databaseClass.fetchCollection(onSuccess = { collect ->
+            birdsObs = collect
+        }, onFailure = {
+            Toast.makeText(context, "${it.message}", Toast.LENGTH_SHORT).show()
+        })
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -399,12 +418,12 @@ fun TabContent1() {
         LazyColumn(
             contentPadding = PaddingValues(vertical = 8.dp) // Padding inside LazyColumn
         ) {
-            items(30) { index ->
+            itemsIndexed(birdsObs) { index, item ->
+                Log.d("content","$birdsObs")
                 // State management for each card
                 val chipStates = remember { mutableStateOf(List(3) { false }) }
 
                 Card(
-                    //elevation = 4.dp, // Shadow for card elevation
                     shape = RoundedCornerShape(12.dp), // Rounded corners
                     modifier = Modifier
                         .fillMaxWidth()
@@ -427,7 +446,7 @@ fun TabContent1() {
                         )
                         Spacer(modifier = Modifier.height(8.dp)) // Space between image and text
                         Text(
-                            text = "Bird Name $index", // Added index to differentiate between cards
+                            text = "Bird Name ${item.bird_name}, $index", // Access bird name from the object
                             style = TextStyle(
                                 fontSize = 18.sp,
                                 fontWeight = FontWeight.Bold,
@@ -471,6 +490,7 @@ fun TabContent1() {
         }
     }
 }
+
 
 
 @Composable
