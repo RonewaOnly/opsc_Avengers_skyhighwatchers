@@ -2,7 +2,9 @@ package com.example.skyhigh_prototype.Model
 
 import android.content.Context
 import android.net.Uri
+import com.google.firebase.Timestamp
 import android.widget.Toast
+import com.example.skyhigh_prototype.Data.BirdFeed
 import com.example.skyhigh_prototype.Data.BirdTip
 import com.example.skyhigh_prototype.Data.Birds
 import com.google.firebase.auth.FirebaseAuth
@@ -139,17 +141,61 @@ class DatabaseHandler{
     }
 
     // Function to fetch collection details
-    fun fetchCollection(cardId: String, onSuccess: (List<Birds>) -> Unit, onFailure: (Exception) -> Unit) {
-        db.collection("Bird Collection").document(cardId)
+    fun fetchCollection(onSuccess: (List<Birds>) -> Unit, onFailure: (Exception) -> Unit) {
+        auth = FirebaseAuth.getInstance()
+        val userID = auth.currentUser?.uid.toString()
+
+        db.collection("Users").document(userID).collection("Bird Collection")
             .get()
-            .addOnSuccessListener { documentSnapshot ->
-                val birdList = documentSnapshot.toObject(BirdTip::class.java)?.content ?: emptyList()
-                onSuccess(birdList) // Trigger callback with fetched bird list
+            .addOnSuccessListener { querySnapshot ->
+                // Create a mutable list to store the birds
+                val allBirds = mutableListOf<Birds>()
+
+                // Loop through each document in the "Bird Collection"
+                for (document in querySnapshot.documents) {
+                    // Extract the "content" field (assuming it's a list of Birds objects)
+                    val content = document.get("content") as? List<Map<String, Any>>
+
+                    // Map the content to Birds objects
+                    content?.let {
+                        val birdsList = content.map { birdData ->
+                            // Create a Birds object from each map entry in the content list
+                            val bird = Birds(
+                                bird_name = birdData["bird_name"] as? String ?: "",
+                                bird_species = birdData["bird_species"] as? List<String> ?: emptyList(),
+                                gender = birdData["gender"] as? String ?: "",
+                                color = birdData["color"] as? List<String> ?: emptyList(),
+                                location = birdData["location"] as? String ?: "",
+                                timestamp = birdData["timestamp"] as? Timestamp ?: Timestamp.now(),
+                                images = birdData["images"] as? List<String> ?: emptyList(),
+                                videos = birdData["videos"] as? List<String> ?: emptyList(),
+                                feed = (birdData["feed"] as? List<Map<String, Any>>)?.map { feedData ->
+                                    BirdFeed(
+                                        feed_name = feedData["feed_name"] as? String ?: "",
+                                        feed_grown = feedData["feed_grown"] as? String ?: ""
+                                    )
+                                } ?: emptyList(),
+                                bird_description = birdData["bird_description"] as? List<String> ?: emptyList(),
+                                relatedSpecies = emptyList(), // You can add handling for relatedSpecies if needed
+                                hotspots = emptyList() // Add handling for hotspots if needed
+                            )
+                            bird // Add this bird to the list
+                        }
+                        // Add this list of birds to the overall list
+                        allBirds.addAll(birdsList)
+                    }
+                }
+
+                // Return the list of Birds through the success callback
+                onSuccess(allBirds)
             }
             .addOnFailureListener { exception ->
-                onFailure(exception) // Trigger error callback
+                // Handle errors in case of failure
+                onFailure(exception)
             }
     }
+
+
     // Function to update Firestore document
     fun updateFirestoreCard(
         cardId: String,
