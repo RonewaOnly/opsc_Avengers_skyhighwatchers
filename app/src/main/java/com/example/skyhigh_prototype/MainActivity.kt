@@ -78,7 +78,7 @@ class MainActivity : ComponentActivity() {
         val apiKey = getString(R.string.ebird_api_key)
 
         // Fetch bird observations (example latitude and longitude)
-        viewModel.getRecentBirdObservations(currentLocations.LATITUDE, currentLocations.LONGITUDE, apiKey)
+        viewModel.getRecentBirdObservations(-currentLocations.LATITUDE, currentLocations.LONGITUDE, apiKey)
         setContent {
             val navController = rememberNavController()
 
