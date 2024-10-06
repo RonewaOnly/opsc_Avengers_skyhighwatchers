@@ -109,7 +109,7 @@ fun Main(@Suppress("UNUSED_PARAMETER") mapViewModel: MapboxViewModel , ebirdView
             topBar = {
                 ExtendedFloatingActionButton(
                     text = { Text("") },
-                    icon = { Icon(Icons.Filled.Menu, contentDescription = "", tint = Color.Black) },
+                    icon = { Icon(Icons.Filled.Menu, contentDescription = "", tint = Color.Black, modifier = Modifier.size(90.dp)) },
                     onClick = {
                         scope.launch {
                             drawerState.apply {
