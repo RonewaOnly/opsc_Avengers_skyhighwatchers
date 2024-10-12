@@ -15,6 +15,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.navigation.NavController
+import com.example.skyhigh_prototype.MainActivity
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 
@@ -43,8 +44,9 @@ fun Logout(navController: NavController) {
                     //to delay intent to login page
                     @Suppress("DEPRECATION")
                     Handler().postDelayed({
-                        navController.navigate("login")
+                        MainActivity()
                     }, 2000)
+
 
                     //closes dialog
                     showAlertDialog = false
@@ -62,5 +64,5 @@ fun Logout(navController: NavController) {
                 }
             }
         )
-    }
+    }//end
 }
