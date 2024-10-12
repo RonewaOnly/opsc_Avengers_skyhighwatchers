@@ -2,6 +2,7 @@ package com.example.skyhigh_prototype.Model
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.util.Log
 import android.view.Surface
@@ -185,10 +186,24 @@ fun CameraCapture(
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
-
-    // CameraProvider as a state that will be set asynchronously
     val cameraProviderFuture = remember { ProcessCameraProvider.getInstance(context) }
+
     var cameraProvider by remember { mutableStateOf<ProcessCameraProvider?>(null) }
+    var previewView by remember { mutableStateOf<PreviewView?>(null) }
+
+    // Ensure camera permission is granted
+    val cameraPermissionGranted = ContextCompat.checkSelfPermission(
+        context, Manifest.permission.CAMERA
+    ) == PackageManager.PERMISSION_GRANTED
+
+    // Initialize the CameraProvider asynchronously
+    LaunchedEffect(cameraProviderFuture) {
+        try {
+            cameraProvider = cameraProviderFuture.get()  // Async fetch of camera provider
+        } catch (e: Exception) {
+            onError(e)  // Handle exception
+        }
+    }
 
     // ImageCapture use case setup
     val imageCapture = remember {
@@ -197,59 +212,60 @@ fun CameraCapture(
             .build()
     }
 
-    // Initialize the CameraProvider asynchronously
-    LaunchedEffect(cameraProviderFuture) {
-        cameraProvider = cameraProviderFuture.get()
-    }
-
+    // UI for the Camera preview
     AndroidView(
         factory = { context ->
-            val previewView = PreviewView(context)
-            val preview = Preview.Builder().build().also {
-                it.setSurfaceProvider(previewView.surfaceProvider)
-            }
+            previewView = PreviewView(context)
+            previewView?.let {
+                val preview = Preview.Builder().build().also { previewInstance ->
+                    previewInstance.setSurfaceProvider(it.surfaceProvider)
+                }
 
-            cameraProvider?.let { provider ->
-                try {
-                    val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
-                    provider.unbindAll()
-                    provider.bindToLifecycle(
-                        lifecycleOwner, cameraSelector, preview, imageCapture
-                    )
-                } catch (e: Exception) {
-                    onError(e)
+                if (cameraProvider != null && cameraPermissionGranted) {
+                    try {
+                        val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+                        cameraProvider?.unbindAll()
+                        cameraProvider?.bindToLifecycle(
+                            lifecycleOwner, cameraSelector, preview, imageCapture
+                        )
+                    } catch (e: Exception) {
+                        onError(e)
+                    }
                 }
             }
-
-            previewView
+            previewView!!
         },
         modifier = Modifier.fillMaxSize()
     )
 
-    // Capture Button
+    // Capture Button UI
     Box(modifier = Modifier.fillMaxSize()) {
         Button(
             onClick = {
-                val photoFile = File(
-                    context.externalMediaDirs.firstOrNull(),
-                    "${System.currentTimeMillis()}.jpg"
-                )
-                val outputOptions = ImageCapture.OutputFileOptions.Builder(photoFile).build()
+                if (cameraPermissionGranted && imageCapture != null) {
+                    val photoFile = File(
+                        context.externalMediaDirs.firstOrNull(),
+                        "${System.currentTimeMillis()}.jpg"
+                    )
+                    val outputOptions = ImageCapture.OutputFileOptions.Builder(photoFile).build()
 
-                imageCapture.takePicture(
-                    outputOptions,
-                    ContextCompat.getMainExecutor(context),
-                    object : ImageCapture.OnImageSavedCallback {
-                        override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
-                            val savedUri = outputFileResults.savedUri ?: Uri.fromFile(photoFile)
-                            onImageCaptured(savedUri)
-                        }
+                    imageCapture.takePicture(
+                        outputOptions,
+                        ContextCompat.getMainExecutor(context),
+                        object : ImageCapture.OnImageSavedCallback {
+                            override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
+                                val savedUri = outputFileResults.savedUri ?: Uri.fromFile(photoFile)
+                                onImageCaptured(savedUri)
+                            }
 
-                        override fun onError(exception: ImageCaptureException) {
-                            onError(exception)
+                            override fun onError(exception: ImageCaptureException) {
+                                onError(exception)
+                            }
                         }
-                    }
-                )
+                    )
+                } else {
+                    onError(Exception("Camera permission is not granted or camera not initialized."))
+                }
             },
             modifier = Modifier.align(Alignment.BottomCenter)
         ) {
@@ -257,6 +273,7 @@ fun CameraCapture(
         }
     }
 }
+
 
 
 @Suppress("NAME_SHADOWING")
