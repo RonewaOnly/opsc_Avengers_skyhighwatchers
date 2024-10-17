@@ -8,7 +8,6 @@ import androidx.room.Room
 import com.example.skyhigh_prototype.Intent.BirdObservation
 import com.example.skyhigh_prototype.Intent.Country
 import com.example.skyhigh_prototype.Intent.EBirdApiClient
-import com.example.skyhigh_prototype.Intent.Hotspot
 import com.example.skyhigh_prototype.Intent.Region
 import com.example.skyhigh_prototype.Intent.Taxonomy
 import com.example.skyhigh_prototype.Room.BirdObservationDao
@@ -28,6 +27,8 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okio.IOException
 import org.json.JSONArray
+import org.json.JSONException
+import org.json.JSONObject
 
 class BirdViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -140,9 +141,10 @@ class BirdViewModel(application: Application) : AndroidViewModel(application) {
             }
         }
     }
-    fun getHotspotByLocation(latitude: Double, longitude: Double, apiKey: String) {
+    fun getHotspotByLocation(latitude: Double, longitude: Double, range: Double, apiKey: String) {
         _isLoading.value = true
-        val url = "https://api.ebird.org/v2/ref/hotspot/geo?lat=$latitude&lng=$longitude"
+
+        val url = "https://api.ebird.org/v2/ref/hotspot/geo?lat=$latitude&lng=$longitude&dist=$range"
 
         val request = Request.Builder()
             .url(url)
@@ -152,32 +154,61 @@ class BirdViewModel(application: Application) : AndroidViewModel(application) {
         client.newCall(request).enqueue(object : okhttp3.Callback {
             override fun onFailure(call: okhttp3.Call, e: IOException) {
                 _isLoading.value = false
+                _errorMessage.value = "Error fetching hotspots: ${e.message}"
+                Log.e("Hotspot API Error", "Failed to fetch hotspots", e)
             }
 
             override fun onResponse(call: okhttp3.Call, response: okhttp3.Response) {
+                _isLoading.value = false
                 response.body?.string()?.let { jsonResponse ->
-                    val hotspots = parseHotspots(jsonResponse)
-                    _hotspot.value = hotspots
-                    _isLoading.value = false
+                    Log.d("Hotspot API Response", jsonResponse) // Log the response
+                    if (jsonResponse.isNotEmpty()) {
+                        try {
+                            val hotspots = parseHotspots(jsonResponse)
+                            _hotspot.value = hotspots
+                        } catch (e: Exception) { // Catch any exception including from parsing
+                            _errorMessage.value = "Error parsing hotspots: ${e.message}"
+                            Log.e("JSON Parsing Error", "Invalid response format", e)
+                        }
+                    } else {
+                        _errorMessage.value = "Empty response from API"
+                        Log.e("Hotspot API", "Received empty response")
+                    }
+                } ?: run {
+                    _errorMessage.value = "Null response body"
+                    Log.e("Hotspot API", "Response body is null")
                 }
             }
         })
     }
 
-    private fun parseHotspots(jsonResponse: String): List<Point> {
-        // Parse JSON response to extract hotspots and their coordinates
-        val hotspots = mutableListOf<Point>()
 
-        val jsonArray = JSONArray(jsonResponse)
-        for (i in 0 until jsonArray.length()) {
-            val hotspot = jsonArray.getJSONObject(i)
-            val lat = hotspot.getDouble("lat")
-            val lng = hotspot.getDouble("lng")
-            hotspots.add(Point.fromLngLat(lng, lat))
+
+    private fun parseHotspots(jsonResponse: String): List<Point> {
+        val hotspots = mutableListOf<Point>()
+        // Split the response by line breaks to get each hotspot entry
+        val lines = jsonResponse.trim().split("\n")
+
+        for (line in lines) {
+            val data = line.split(",") // Split each line by commas
+            if (data.size >= 6) { // Ensure there are enough elements to extract lat and lng
+                try {
+                    val lat = data[4].toDouble() // Latitude is the 5th element
+                    val lng = data[5].toDouble() // Longitude is the 6th element
+                    hotspots.add(Point.fromLngLat(lng, lat))
+                } catch (e: NumberFormatException) {
+                    Log.e("Hotspot Parsing Error", "Failed to parse latitude or longitude from line: $line", e)
+                }
+            } else {
+                Log.e("Hotspot Parsing Error", "Invalid data format: $line")
+            }
         }
 
         return hotspots
     }
+
+
+
 
     fun getRoute(origin: Point, destination: Point, callback: (List<Point>) -> Unit) {
         viewModelScope.launch {
