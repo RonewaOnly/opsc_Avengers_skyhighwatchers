@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.os.Bundle
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -43,6 +44,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.skyhigh_prototype.Model.BirdViewModel
+import com.example.skyhigh_prototype.Model.LocationViewModel
 import com.example.skyhigh_prototype.Model.MapboxViewModel
 import com.example.skyhigh_prototype.Model.currentLocations
 import com.example.skyhigh_prototype.View.ForgotPassword
@@ -57,6 +59,8 @@ import com.example.skyhigh_prototype.ui.theme.LightBackground
 import com.example.skyhigh_prototype.ui.theme.LightOnPrimary
 import com.example.skyhigh_prototype.ui.theme.LightPrimary
 import com.example.skyhigh_prototype.ui.theme.LightSurface
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationServices
 import kotlinx.coroutines.delay
 import java.util.Locale
 
@@ -64,68 +68,70 @@ class MainActivity : ComponentActivity() {
     private val locationPermissionsRequestCode = 1
     val mapboxViewModel: MapboxViewModel by viewModels()
     private val viewModel: BirdViewModel by viewModels()
+    private val locationViewModel: LocationViewModel by viewModels()
+
+
+    // Initialize FusedLocationProviderClient
+    private lateinit var fusedLocationProviderClient: FusedLocationProviderClient
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        // Initialize PermissionsManager (if still needed)
-        // permissionsManager = PermissionsManager(this)
+        // Initialize FusedLocationProviderClient in the ViewModel
+        locationViewModel.initLocationClient(this)
+        fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this)
 
-        // Check and request permissions
-        checkAndRequestLocationPermissions()
+        // Check for location permissions
+//        if (hasLocationPermission()) {
+//            locationViewModel.requestLocation(this)
+//        } else {
+//            requestLocationPermission()
+//        }
+
         // Use your API key from strings.xml
         val apiKey = getString(R.string.ebird_api_key)
 
         // Fetch bird observations (example latitude and longitude)
         viewModel.getRecentBirdObservations(-currentLocations.LATITUDE, currentLocations.LONGITUDE, apiKey)
+        Log.e("The locations","Latitude: ${-currentLocations.LATITUDE},Longitude: ${currentLocations.LONGITUDE}")
         setContent {
             val navController = rememberNavController()
 
             var isDarkTheme by remember { mutableStateOf(false) }
             MaterialTheme(colorScheme = if (isDarkTheme) getDarkColors() else getLightColors()) {
-                MyAppNavHost(navController = navController, viewModel,isDarkTheme, onThemeChange = { isDarkTheme = it })
+                MyAppNavHost(fusedLocationProviderClient,navController = navController, viewModel,isDarkTheme, onThemeChange = { isDarkTheme = it })
 
             }
-           // MyAppNavHost(navController = navController, viewModel)
+            // MyAppNavHost(navController = navController, viewModel)
         }
     }
 
-    private fun checkAndRequestLocationPermissions() {
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), locationPermissionsRequestCode)
-        } else {
-            // Permission already granted, initialize map
-            mapboxViewModel.setupLocationProvider()
-            mapboxViewModel.onPermissionResult(true)
-        }
-    }
-
-    @Deprecated("This method has been deprecated in favor of using the Activity Result API\n      which brings increased type safety via an {@link ActivityResultContract} and the prebuilt\n      contracts for common intents available in\n      {@link androidx.activity.result.contract.ActivityResultContracts}, provides hooks for\n      testing, and allow receiving results in separate, testable classes independent from your\n      activity. Use\n      {@link #registerForActivityResult(ActivityResultContract, ActivityResultCallback)} passing\n      in a {@link RequestMultiplePermissions} object for the {@link ActivityResultContract} and\n      handling the result in the {@link ActivityResultCallback#onActivityResult(Object) callback}.")
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
-        @Suppress("DEPRECATION")
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == locationPermissionsRequestCode) {
-            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                // Permission granted
-                Toast.makeText(this, "Location permission granted", Toast.LENGTH_SHORT).show()
-                mapboxViewModel.setupLocationProvider()
-                mapboxViewModel.onPermissionResult(true)
-
-            } else {
-                // Permission denied
-                Toast.makeText(this, "Location permission denied", Toast.LENGTH_SHORT).show()
-                mapboxViewModel.onPermissionResult(true)
-
-            }
-        }
-    }
-
-
+//    private fun hasLocationPermission(): Boolean {
+//        return ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+//    }
+//
+//    private fun requestLocationPermission() {
+//        ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), locationPermissionsRequestCode)
+//    }
+//
+//    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
+//        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+//        if (requestCode == locationPermissionsRequestCode) {
+//            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+//                // Permission granted
+//                Toast.makeText(this, "Location permission granted", Toast.LENGTH_SHORT).show()
+//                locationViewModel.requestLocation(this) // Request location after permission is granted
+//            } else {
+//                // Permission denied
+//                Toast.makeText(this, "Location permission denied", Toast.LENGTH_SHORT).show()
+//            }
+//        }
+//    }
 }
 
 @Composable
-fun SkyHigh(mainActivity: MainActivity,ebirdView: BirdViewModel,isDarkTheme: Boolean, onThemeChange: (Boolean) -> Unit) {
+fun SkyHigh(fusedLocationProviderClient: FusedLocationProviderClient, mainActivity: MainActivity, ebirdView: BirdViewModel, isDarkTheme: Boolean, onThemeChange: (Boolean) -> Unit) {
     val rememberNav = rememberNavController()
 
     NavHost(navController = rememberNav, startDestination = "login") {
@@ -168,10 +174,10 @@ fun SplashScreen(navController: NavController) {
 
 // Composable function for navigation between splash and main login screen
 @Composable
-fun MyAppNavHost(navController: NavHostController,ebirdView: BirdViewModel,isDarkTheme: Boolean, onThemeChange: (Boolean) -> Unit) {
+fun MyAppNavHost(fusedLocationProviderClient:FusedLocationProviderClient,navController: NavHostController,ebirdView: BirdViewModel,isDarkTheme: Boolean, onThemeChange: (Boolean) -> Unit) {
     NavHost(navController = navController, startDestination = "splash_screen") {
         composable("splash_screen") { SplashScreen(navController) }
-        composable("sky_high") { SkyHigh(mainActivity = LocalContext.current as MainActivity,ebirdView,isDarkTheme, onThemeChange) }
+        composable("sky_high") { SkyHigh( fusedLocationProviderClient =  fusedLocationProviderClient,mainActivity = LocalContext.current as MainActivity,ebirdView,isDarkTheme, onThemeChange) }
     }
 }
 
