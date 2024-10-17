@@ -130,7 +130,7 @@ fun Maps(
     LaunchedEffect(Unit) {
         mapboxViewModel.currentLocation.collect { location ->
             location?.let {
-                birdView.getHotspotByLocation(-it.latitude, it.longitude, getString(context, R.string.ebird_api_key))
+                birdView.getHotspotByLocation(-it.latitude, it.longitude,2.2 ,getString(context, R.string.ebird_api_key))
             }
         }
     }
