@@ -90,7 +90,7 @@ import kotlinx.coroutines.launch
 
 
 @Composable
-fun Main(@Suppress("UNUSED_PARAMETER") mapViewModel: MapboxViewModel , ebirdViewModel: BirdViewModel,isDarkTheme: Boolean, onThemeChange: (Boolean) -> Unit) {
+fun Main(@Suppress("UNUSED_PARAMETER") mapViewModel: MapboxViewModel , ebirdViewModel: BirdViewModel ,isDarkTheme: Boolean, onThemeChange: (Boolean) -> Unit) {
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     val rememberNavController = rememberNavController()
@@ -153,7 +153,7 @@ fun Main(@Suppress("UNUSED_PARAMETER") mapViewModel: MapboxViewModel , ebirdView
                     PersonalCollection()
                 }
                 composable("ViewMap") {
-                    MapOption(rememberNavController)
+                    MapOption(rememberNavController, ebirdViewModel )
                 }
                 composable("logout") {
                     Logout(rememberNavController)
