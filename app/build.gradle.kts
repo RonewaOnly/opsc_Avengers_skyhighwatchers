@@ -137,6 +137,9 @@ dependencies {
 
     implementation("androidx.compose.material:material:1.7.1")
 
+    implementation ("androidx.lifecycle:lifecycle-viewmodel-compose:2.4.0-alpha05")
+
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
