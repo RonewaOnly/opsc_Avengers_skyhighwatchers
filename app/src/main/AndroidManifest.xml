@@ -35,17 +35,17 @@
         <meta-data
             android:name="MAPBOX_ACCESS_TOKEN"
             android:value= "sk.eyJ1Ijoic3R1ZGVudHN0YXIiLCJhIjoiY2x6bGh4NGp5MDJ4bjJqc2lsNThicmV6dSJ9.Oe_UCSkcsmXOJlwLIVzbMg" />
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="AIzaSyAlVR7kdu_Fxb8DDCJdW53fVsMLIrkI9P8" />
         <activity
             android:name=".MainActivity"
             android:exported="true"
             android:theme="@style/Theme.SkyHigh_prototype" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
     </application>
-
 </manifest>
