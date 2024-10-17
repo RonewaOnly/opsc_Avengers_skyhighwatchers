@@ -15,11 +15,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.example.skyhigh_prototype.Model.BirdViewModel
+import com.example.skyhigh_prototype.Model.MapScreen
 import com.example.skyhigh_prototype.Model.MapboxViewModel
 import com.example.skyhigh_prototype.Model.Maps
 
 @Composable
-fun MapOption(navController: NavController){
+fun MapOption(navController: NavController,birdViewModel: BirdViewModel){
     //val map = MapboxViewModel()
 
     Column(
@@ -31,6 +33,8 @@ fun MapOption(navController: NavController){
             Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "")
         }
         HorizontalDivider()
-        Maps()
+        //Maps()
+
+        MapScreen()
     }
 }
