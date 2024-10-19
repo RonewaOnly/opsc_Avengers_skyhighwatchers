@@ -3,6 +3,7 @@ package com.example.skyhigh_prototype
 import android.Manifest
 import android.app.Activity
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.os.Bundle
@@ -11,6 +12,8 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -44,6 +47,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.skyhigh_prototype.Model.BirdViewModel
+import com.example.skyhigh_prototype.Model.DatabaseHandler
 import com.example.skyhigh_prototype.Model.LocationViewModel
 import com.example.skyhigh_prototype.Model.MapboxViewModel
 import com.example.skyhigh_prototype.Model.currentLocations
@@ -69,6 +73,7 @@ class MainActivity : ComponentActivity() {
     val mapboxViewModel: MapboxViewModel by viewModels()
     private val viewModel: BirdViewModel by viewModels()
     private val locationViewModel: LocationViewModel by viewModels()
+    private lateinit var databaseHandle: DatabaseHandler
 
 
     // Initialize FusedLocationProviderClient
@@ -77,7 +82,21 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        databaseHandle = DatabaseHandler()
+        databaseHandle.initGoogleSignIn(this)
 
+        val googleSignInLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            val data = result.data
+            databaseHandle.handleSignInResult(data,
+                onSuccess = {
+                    Toast.makeText(this, "Google Sign-In Successful", Toast.LENGTH_SHORT).show()
+                    // Navigate to the next screen
+                },
+                onError = { error ->
+                    Toast.makeText(this, error, Toast.LENGTH_SHORT).show()
+                }
+            )
+        }
         // Initialize FusedLocationProviderClient in the ViewModel
         locationViewModel.initLocationClient(this)
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this)
@@ -93,16 +112,19 @@ class MainActivity : ComponentActivity() {
         val apiKey = getString(R.string.ebird_api_key)
 
         // Fetch bird observations (example latitude and longitude)
-        viewModel.getRecentBirdObservations(-currentLocations.LATITUDE, currentLocations.LONGITUDE, apiKey)
+        viewModel.getRecentBirdObservations(currentLocations.LATITUDE, currentLocations.LONGITUDE, apiKey)
         Log.e("The locations","Latitude: ${-currentLocations.LATITUDE},Longitude: ${currentLocations.LONGITUDE}")
         setContent {
             val navController = rememberNavController()
 
             var isDarkTheme by remember { mutableStateOf(false) }
             MaterialTheme(colorScheme = if (isDarkTheme) getDarkColors() else getLightColors()) {
-                MyAppNavHost(fusedLocationProviderClient,navController = navController, viewModel,isDarkTheme, onThemeChange = { isDarkTheme = it })
+                MyAppNavHost(fusedLocationProviderClient,navController = navController, viewModel,isDarkTheme, onThemeChange = { isDarkTheme = it },databaseHandle,googleSignInLauncher)
 
             }
+
+
+
             // MyAppNavHost(navController = navController, viewModel)
         }
     }
@@ -128,15 +150,17 @@ class MainActivity : ComponentActivity() {
 //            }
 //        }
 //    }
+
+
 }
 
 @Composable
-fun SkyHigh(fusedLocationProviderClient: FusedLocationProviderClient, mainActivity: MainActivity, ebirdView: BirdViewModel, isDarkTheme: Boolean, onThemeChange: (Boolean) -> Unit) {
+fun SkyHigh(fusedLocationProviderClient: FusedLocationProviderClient, mainActivity: MainActivity, ebirdView: BirdViewModel, isDarkTheme: Boolean, onThemeChange: (Boolean) -> Unit, databaseHandle: DatabaseHandler, googleSignInLauncher: ActivityResultLauncher<Intent>) {
     val rememberNav = rememberNavController()
 
     NavHost(navController = rememberNav, startDestination = "login") {
         composable("login") {
-            Login(rememberNav)
+            Login(rememberNav,databaseHandle, googleSignInLauncher)
         }
         composable("register") {
             Register(rememberNav)
@@ -174,10 +198,10 @@ fun SplashScreen(navController: NavController) {
 
 // Composable function for navigation between splash and main login screen
 @Composable
-fun MyAppNavHost(fusedLocationProviderClient:FusedLocationProviderClient,navController: NavHostController,ebirdView: BirdViewModel,isDarkTheme: Boolean, onThemeChange: (Boolean) -> Unit) {
+fun MyAppNavHost(fusedLocationProviderClient:FusedLocationProviderClient,navController: NavHostController,ebirdView: BirdViewModel,isDarkTheme: Boolean, onThemeChange: (Boolean) -> Unit, databaseHandle: DatabaseHandler, googleSignInLauncher: ActivityResultLauncher<Intent>) {
     NavHost(navController = navController, startDestination = "splash_screen") {
         composable("splash_screen") { SplashScreen(navController) }
-        composable("sky_high") { SkyHigh( fusedLocationProviderClient =  fusedLocationProviderClient,mainActivity = LocalContext.current as MainActivity,ebirdView,isDarkTheme, onThemeChange) }
+        composable("sky_high") { SkyHigh( fusedLocationProviderClient =  fusedLocationProviderClient,mainActivity = LocalContext.current as MainActivity,ebirdView,isDarkTheme, onThemeChange,databaseHandle, googleSignInLauncher) }
     }
 }
 
