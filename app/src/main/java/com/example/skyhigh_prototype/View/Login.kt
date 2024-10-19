@@ -77,7 +77,7 @@ fun Login(navController: NavController, databaseHandle: DatabaseHandler, googleS
     var passwordError by remember { mutableStateOf("") }
 
     //firebase instances
-    var auth : FirebaseAuth
+    //var auth : FirebaseAuth
 
     //column for page
     Column(
@@ -235,7 +235,7 @@ fun Login(navController: NavController, databaseHandle: DatabaseHandler, googleS
                 onClick = {
 
                     //initialising firebase instances
-                    auth = FirebaseAuth.getInstance()
+                   // auth = FirebaseAuth.getInstance()
 
 
                     // Validate all input fields before proceeding

@@ -30,7 +30,7 @@ import java.util.UUID
 class DatabaseHandler{
     val db = FirebaseFirestore.getInstance()
     private val storage = FirebaseStorage.getInstance()
-    lateinit var auth: FirebaseAuth
+    private var auth: FirebaseAuth = FirebaseAuth.getInstance()
     lateinit var googleSignInClient: GoogleSignInClient
 
     // Initialize Google Sign-In
