@@ -3,21 +3,30 @@ package com.example.skyhigh_prototype.Model
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.Location
+import android.net.Uri
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat.getString
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.skyhigh_prototype.Intent.Hotspot
 import com.example.skyhigh_prototype.R
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.android.gms.location.LocationServices
@@ -36,6 +45,7 @@ fun MapScreen(
     val userLocation by locationViewModel.location.collectAsState()
     val birdHotspots by birdViewModel.hotspot.collectAsState()
     var selectedRange by remember { mutableStateOf(10.0) } // Default range to 10 km
+    var selectedHotspot by remember { mutableStateOf<Hotspot?>(null) }
 
     // Request location permission
     val locationPermissionRequest = rememberLauncherForActivityResult(
@@ -58,40 +68,59 @@ fun MapScreen(
         }
     }
 
-    // Handle map and markers
-    GoogleMap(
-        modifier = Modifier.fillMaxSize(),
-        cameraPositionState = rememberCameraPositionState {
-            position = userLocation?.let {
-                CameraPosition.fromLatLngZoom(LatLng(it.latitude, it.longitude), 10f)
-            } ?: CameraPosition.fromLatLngZoom(LatLng(0.0, 0.0), 1f)
-        }
-    ) {
-        userLocation?.let {
-            Marker(
-                state = MarkerState(position = LatLng(it.latitude, it.longitude)),
-                title = "Your Location"
-            )
+    // Use a Box layout to overlay the map and the RangeSelector
+    Box(modifier = Modifier.fillMaxSize()) {
+        // Handle map and markers
+        GoogleMap(
+            modifier = Modifier.fillMaxSize(),
+            cameraPositionState = rememberCameraPositionState {
+                position = userLocation?.let {
+                    CameraPosition.fromLatLngZoom(LatLng(it.latitude, it.longitude), 10f)
+                } ?: CameraPosition.fromLatLngZoom(LatLng(0.0, 0.0), 1f)
+            }
+        ) {
+            userLocation?.let {
+                Marker(
+                    state = MarkerState(position = LatLng(it.latitude, it.longitude)),
+                    title = "Your Location"
+                )
 
-            // Fetch and display bird hotspots within the selected range
-            birdViewModel.getHotspotByLocation(it.latitude, it.longitude, selectedRange, getString(context,R.string.ebird_api_key))
-        }
+                // Fetch and display bird hotspots within the selected range
+                birdViewModel.getHotspotByLocation(it.latitude, it.longitude, selectedRange, getString(context,R.string.ebird_api_key))
+            }
 
-        // Add markers for bird hotspots
-        birdHotspots.forEach { hotspot ->
-            Marker(
-                state = MarkerState(position = LatLng(hotspot.latitude(), hotspot.longitude())),
-                title = "Bird Hotspot",
-                snippet = "Birds seen here"
-            )
+            // Add markers for bird hotspots
+            birdHotspots.forEach { hotspot ->
+                Marker(
+                    state = MarkerState(position = LatLng(hotspot.latitude(), hotspot.longitude())),
+                    title = "Bird Hotspot",
+                    snippet = "Birds seen here",
+                    onClick = {
+                        selectedHotspot = Hotspot(
+                            locId = "id",
+                            locName = "Name",
+                            lat = hotspot.latitude(),
+                            lng = hotspot.longitude()
+                        ) // Set the selected hotspot
+                        showDirectionsToHotspot(context, userLocation, LatLng(hotspot.latitude(), hotspot.longitude()))
+                        true
+                    }
+                )
+            }
         }
-    }
-
-    // Range selector UI
-    RangeSelector { range ->
-        selectedRange = range
+        // Range selector UI, overlaid on top of the map
+        Box(
+            modifier = Modifier
+                .align(Alignment.TopCenter) // Align the RangeSelector to the bottom center
+                .padding(16.dp) // Add some padding
+        ) {
+            RangeSelector { range ->
+                selectedRange = range
+            }
+        }
     }
 }
+
 
 
 // Function to get current location using FusedLocationProviderClient
@@ -118,5 +147,20 @@ fun RangeSelector(onRangeSelected: (Double) -> Unit) {
                 onRangeSelected(selectedRange)
             }
         )
+    }
+}
+
+// Function to show directions to the hotspot
+fun showDirectionsToHotspot(context: Context, userLocation: Location?, hotspotLatLng: LatLng) {
+    if (userLocation != null) {
+        val gmmIntentUri = Uri.parse(
+            "http://maps.google.com/maps?saddr=${userLocation.latitude},${userLocation.longitude}&daddr=${hotspotLatLng.latitude},${hotspotLatLng.longitude}"
+        )
+        val mapIntent = Intent(Intent.ACTION_VIEW, gmmIntentUri).apply {
+            setPackage("com.google.android.apps.maps")
+        }
+        context.startActivity(mapIntent)
+    } else {
+        Toast.makeText(context, "Current location not available", Toast.LENGTH_SHORT).show()
     }
 }
