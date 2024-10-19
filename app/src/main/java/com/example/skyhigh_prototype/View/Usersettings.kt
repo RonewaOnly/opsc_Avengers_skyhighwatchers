@@ -36,11 +36,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import coil.compose.rememberImagePainter
+import com.google.firebase.Timestamp
 
 @Composable
 fun Profile(navController: NavController){
     Text(text = "Profile")
-    //Dumn data
+    //Testing data
     val userProfile = UserProfile(
         userId = "user-123456",
         username = "BirdLover99",
@@ -48,7 +49,7 @@ fun Profile(navController: NavController){
         profilePictureUrl = "https://th.bing.com/th/id/OIP.sg1wzZN-FkYl9mFfJ4DQmQHaE8?rs=1&pid=ImgDetMain",
         bio = "Avid bird watcher from the Pacific Northwest, love spotting rare species!",
         location = "Seattle, WA",
-        joinedDate = "March 20, 2023",
+        //joinedDate = "March 20, 2023",
         favoriteBirds = listOf("Bald Eagle", "Peregrine Falcon", "Snowy Owl"),
         sightingsCount = 145,
         customAreas = listOf(
@@ -287,7 +288,7 @@ data class UserProfile(
     val profilePictureUrl: String?,
     val bio: String,
     val location: String,
-    val joinedDate: String,
+    val joinedDate: Timestamp = Timestamp.now(),
     val favoriteBirds: List<String>,
     val sightingsCount: Int,
     val customAreas: List<CustomArea>,
