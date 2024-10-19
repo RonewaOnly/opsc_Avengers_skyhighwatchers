@@ -8,6 +8,8 @@ buildscript {
         classpath(libs.kotlin.gradle.plugin) // Ensure this is for Kotlin 2.0 or higher
         classpath(libs.gradle) // Use the latest version of the Android Gradle Plugin
         classpath(libs.androidx.compiler) // Add this line for Compose Compiler Plugin
+        classpath("com.google.gms:google-services:4.4.2")
+
     }
 }
 

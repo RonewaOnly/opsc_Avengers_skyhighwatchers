@@ -91,6 +91,8 @@ dependencies {
     implementation(libs.firebase.firestore)
     implementation(libs.play.services.location)
 
+    implementation ("com.google.android.gms:play-services-auth:20.7.0")
+
     // Camera
     val cameraVersion = "1.2.2"
     implementation("androidx.camera:camera-core:$cameraVersion")
