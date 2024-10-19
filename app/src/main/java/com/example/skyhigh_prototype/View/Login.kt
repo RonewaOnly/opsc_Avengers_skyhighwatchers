@@ -3,8 +3,11 @@
 package com.example.skyhigh_prototype.View
 
 
+import android.app.Activity
+import android.content.Intent
 import android.os.Handler
 import android.widget.Toast
+import androidx.activity.result.ActivityResultLauncher
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -48,12 +51,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.example.skyhigh_prototype.Model.DatabaseHandler
 import com.example.skyhigh_prototype.R
 import com.google.firebase.auth.FirebaseAuth
 
 @Composable
-fun Login(navController: NavController) {
-
+fun Login(navController: NavController, databaseHandle: DatabaseHandler, googleSignInLauncher: ActivityResultLauncher<Intent>) {
+    val databasehandle = DatabaseHandler()
     //variables
     var username by remember {
         mutableStateOf("")
@@ -240,24 +244,9 @@ fun Login(navController: NavController) {
 
                     //if to check validations passed
                     if (emailError.isEmpty() && passwordError.isEmpty()) {
-
-                        //using firebase auth method to sign in a user
-                        auth.signInWithEmailAndPassword(username, password).addOnSuccessListener {
-
-                            //to alert user
-                            Toast.makeText(context, "Successful Login you will be shortly redirected to your dashboard", Toast.LENGTH_LONG).show()
-                            //handler to delay intent
-                            @Suppress("DEPRECATION")
-                            Handler().postDelayed({
-                                //navigating to home page
-                                navController.navigate("homepage")
-                            }, 2000)
-
-
-                        }.addOnFailureListener {
-
-                            passwordError = "Email or Password Incorrect"
-                        }
+                        databasehandle.Login(username,password,context,navController,onSuccess ={}, onError = {
+                            passwordError = it
+                        })
                     }
                 },
 
@@ -299,7 +288,8 @@ fun Login(navController: NavController) {
 
                     // Google account button
                     Button(
-                        onClick = { /*TODO*/ },
+                        onClick = { databaseHandle.signInWithGoogle(context as Activity, googleSignInLauncher)
+                        },
                         modifier = Modifier
                             .padding(10.dp, 5.dp)
                             .width(150.dp),

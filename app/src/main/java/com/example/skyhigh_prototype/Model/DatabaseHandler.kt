@@ -1,13 +1,26 @@
 package com.example.skyhigh_prototype.Model
 
+import android.app.Activity
 import android.content.Context
+import android.content.Intent
 import android.net.Uri
+import android.os.Handler
+import android.util.Log
 import com.google.firebase.Timestamp
 import android.widget.Toast
+import androidx.activity.result.ActivityResultLauncher
+import androidx.navigation.NavController
 import com.example.skyhigh_prototype.Data.BirdFeed
 import com.example.skyhigh_prototype.Data.BirdTip
 import com.example.skyhigh_prototype.Data.Birds
+import com.example.skyhigh_prototype.R
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInClient
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+import com.google.android.gms.common.api.ApiException
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseUser
+import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.toObjects
@@ -17,9 +30,74 @@ import java.util.UUID
 class DatabaseHandler{
     val db = FirebaseFirestore.getInstance()
     private val storage = FirebaseStorage.getInstance()
-    lateinit var auth : FirebaseAuth
+    lateinit var auth: FirebaseAuth
+    lateinit var googleSignInClient: GoogleSignInClient
 
+    // Initialize Google Sign-In
+    fun initGoogleSignIn(context: Context) {
+        // Configure Google Sign-In
+        val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+            .requestIdToken(context.getString(R.string.default_web_client_id)) // From google-services.json
+            .requestEmail()
+            .build()
 
+        googleSignInClient = GoogleSignIn.getClient(context, gso)
+        auth = FirebaseAuth.getInstance()
+    }
+
+    // Start Google Sign-In Intent
+    fun signInWithGoogle(activity: Activity, signInLauncher: ActivityResultLauncher<Intent>) {
+        val signInIntent = googleSignInClient.signInIntent
+        signInLauncher.launch(signInIntent)
+    }
+
+    // Handle Google Sign-In Result
+    fun handleSignInResult(data: Intent?, onSuccess: () -> Unit, onError: (String) -> Unit) {
+        val task = GoogleSignIn.getSignedInAccountFromIntent(data)
+        try {
+            val account = task.getResult(ApiException::class.java)
+            if (account != null) {
+                firebaseAuthWithGoogle(account.idToken!!, onSuccess, onError)
+            }
+        } catch (e: ApiException) {
+            onError("Google sign-in failed")
+            e.message?.let { Log.e("Google sign-in failed:", it) }
+        }
+    }
+
+    private fun firebaseAuthWithGoogle(idToken: String, onSuccess: () -> Unit, onError: (String) -> Unit) {
+        val credential = GoogleAuthProvider.getCredential(idToken, null)
+        auth.signInWithCredential(credential)
+            .addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    onSuccess()
+                } else {
+                    onError("Firebase authentication failed")
+                }
+            }
+    }
+    fun Login(email: String,password: String,context: Context, navController: NavController ,onSuccess: () -> Unit,onError: (String) -> Unit){
+
+        //using firebase auth method to sign in a user
+        auth.signInWithEmailAndPassword(email, password).addOnSuccessListener {
+
+            //to alert user
+            Toast.makeText(context, "Successful Login you will be shortly redirected to your dashboard", Toast.LENGTH_LONG).show()
+            //handler to delay intent
+            @Suppress("DEPRECATION")
+            Handler().postDelayed({
+                //navigating to home page
+                navController.navigate("homepage")
+            }, 2000)
+            onSuccess()
+        }.addOnFailureListener {
+            onError("Email or Password Incorrect")
+        }
+    }
+
+    fun Register(){
+
+    }
     fun createCollection(birdTip: BirdTip,context: Context){
         auth = FirebaseAuth.getInstance()
         val userID = auth.currentUser?.uid.toString()
