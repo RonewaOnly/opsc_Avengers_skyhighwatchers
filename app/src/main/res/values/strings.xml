@@ -26,4 +26,7 @@
     <string name="view_past_reports">view part reports</string>
     <string name="view_details">view details</string>
 
+    <string name="default_web_client_id">884947624000-4bbue6q7lcuebqkjiaj6cvtjjfhl4tka.apps.googleusercontent.com</string>
+
+
 </resources>
