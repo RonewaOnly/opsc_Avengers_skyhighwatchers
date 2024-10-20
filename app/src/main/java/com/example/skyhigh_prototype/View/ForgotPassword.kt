@@ -21,6 +21,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -52,6 +53,7 @@ fun ForgotPassword(navController: NavController){
         modifier = Modifier
             .fillMaxSize()
             .background(Color.White)
+            .padding(top = 50.dp)
     ) {
         //box for logo image
         Box(
@@ -66,7 +68,8 @@ fun ForgotPassword(navController: NavController){
                 modifier = Modifier
                     .width(400.dp)
                     .height(350.dp)
-                    .padding(top = 30.dp),
+                    .padding(top = 30.dp)
+                    .align(Alignment.Center),
                 painter = painterResource(id = R.drawable.sky_high_watchers_logo),
                 contentDescription = "logo"
             )
