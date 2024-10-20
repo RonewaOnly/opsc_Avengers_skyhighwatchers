@@ -93,14 +93,15 @@ fun PersonalCollection() {
         columns = GridCells.Fixed(3),
         modifier = Modifier
             .height(2500.dp)
-            .padding(top = 60.dp)
+            .padding(start = 10.dp, top = 120.dp)
     ) {
         item {
             Column(
                 modifier = Modifier
                     .width(150.dp)
                     .height(290.dp)
-                    .border(1.dp, Color.Blue, RectangleShape),
+                    .border(1.dp, Color.Blue, RectangleShape)
+                    .padding(10.dp),
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
@@ -236,7 +237,7 @@ fun ViewCard(tips: List<BirdTip>, editButton: (Boolean)->Unit) {
     tips.forEach {
         Column(
             modifier = Modifier
-                .padding(10.dp)
+                .padding(start = 10.dp)
                 .border(1.dp, Color.Blue)
                 .width(200.dp)
                 .height(290.dp),
