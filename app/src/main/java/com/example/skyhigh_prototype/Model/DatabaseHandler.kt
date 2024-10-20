@@ -13,18 +13,18 @@ import androidx.navigation.NavController
 import com.example.skyhigh_prototype.Data.BirdFeed
 import com.example.skyhigh_prototype.Data.BirdTip
 import com.example.skyhigh_prototype.Data.Birds
+import com.example.skyhigh_prototype.Data.UserDetails
 import com.example.skyhigh_prototype.R
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.toObjects
 import com.google.firebase.storage.FirebaseStorage
+import java.security.MessageDigest
 import java.util.UUID
 
 class DatabaseHandler{
@@ -95,8 +95,50 @@ class DatabaseHandler{
         }
     }
 
-    fun Register(){
+    fun register(firstname:String, lastname:String, email: String, password: String, navController: NavController, context:Context){
+//using firebase auth to create a user with authentication
+        auth.createUserWithEmailAndPassword(email, password).addOnSuccessListener {
 
+            //get current user id
+            val userID = auth.currentUser?.uid
+
+            //using hash map to store user details to firestore database
+//            val user = hashMapOf(
+//                "First Name" to  firstname,
+//                "Last Name" to lastname,
+//                "Email" to email
+//
+//            )
+
+            val hashed = hashPassword(password)
+            val user = UserDetails(firstname,lastname,email,hashed);
+            //creating user with id
+            if(userID != null){
+                //adding user to collection
+                db.collection("Users").document(userID).set(user).addOnFailureListener {
+                    //to alert user
+                    Toast.makeText(context,"Unable to save user details to database", Toast.LENGTH_LONG).show()
+                }
+            }
+            //alert user
+            Toast.makeText(context,"Successful Account Creation\nYou will be redirected to Login Page", Toast.LENGTH_LONG).show()
+
+            //to delay intent
+            @Suppress("DEPRECATION")
+            Handler().postDelayed({
+
+                //navigate to login
+                navController.navigate("login")
+
+            }, 2000)
+
+
+        }.addOnFailureListener {
+
+            //to alert user
+            Toast.makeText(context,"Email already exit", Toast.LENGTH_LONG).show()
+
+        }
     }
     fun createCollection(birdTip: BirdTip,context: Context){
         auth = FirebaseAuth.getInstance()
@@ -305,5 +347,9 @@ class DatabaseHandler{
                 onFailure(exception) // Trigger error callback
             }
     }
-
+    // Hash password using SHA-256
+    fun hashPassword(password: String): String {
+        val bytes = MessageDigest.getInstance("SHA-256").digest(password.toByteArray())
+        return bytes.joinToString("-") { "%02x".format(it) }
+    }
 }
