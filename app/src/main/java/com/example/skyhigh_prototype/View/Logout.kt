@@ -4,7 +4,9 @@ package com.example.skyhigh_prototype.View
 
 //noinspection UsingMaterialAndMaterial3Libraries
 
+import android.annotation.SuppressLint
 import android.os.Handler
+import android.util.Log
 //noinspection UsingMaterialAndMaterial3Libraries
 import androidx.compose.material.AlertDialog
 import androidx.compose.material3.Text
@@ -17,7 +19,12 @@ import androidx.compose.runtime.setValue
 import androidx.navigation.NavController
 import com.example.skyhigh_prototype.MainActivity
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.firestore.FirebaseFirestore
+
+private var auth = FirebaseAuth.getInstance()
+@SuppressLint("StaticFieldLeak")
+private var firestore = FirebaseFirestore.getInstance()
 
 @Composable
 fun Logout(navController: NavController) {
@@ -25,14 +32,10 @@ fun Logout(navController: NavController) {
     //alert dialog variable
     var showAlertDialog by remember { mutableStateOf(true) }
 
-    //auth and firestore instances
-    val auth: FirebaseAuth = FirebaseAuth.getInstance()
-    val firestore: FirebaseFirestore = FirebaseFirestore.getInstance()
 
     //to show dialog
     if (showAlertDialog) {
-        AlertDialog(
-            onDismissRequest = { showAlertDialog = false },
+        AlertDialog(onDismissRequest = { showAlertDialog = false },
             title = { Text(text = "Confirm Logout") },
             text = { Text(text = "Are you sure you want to log out?") },
             confirmButton = {
@@ -42,8 +45,7 @@ fun Logout(navController: NavController) {
                     auth.signOut()
 
                     //to delay intent to login page
-                    @Suppress("DEPRECATION")
-                    Handler().postDelayed({
+                    @Suppress("DEPRECATION") Handler().postDelayed({
                         MainActivity()
                     }, 2000)
 
@@ -62,7 +64,9 @@ fun Logout(navController: NavController) {
                 }) {
                     Text(text = "No")
                 }
-            }
-        )
+            })
     }//end
+
+
+
 }
