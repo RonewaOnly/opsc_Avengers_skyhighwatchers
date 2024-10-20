@@ -84,6 +84,7 @@ fun Login(navController: NavController, databaseHandle: DatabaseHandler, googleS
         modifier = Modifier
             .fillMaxSize()
             .background(Color.White)
+            .padding( top = 50.dp)
     ) {
 
         //first box contains logo image
@@ -98,7 +99,8 @@ fun Login(navController: NavController, databaseHandle: DatabaseHandler, googleS
                 modifier = Modifier
                     .width(400.dp)
                     .height(350.dp)
-                    .padding(top = 30.dp),
+                    .padding(top = 30.dp)
+                    .align(Alignment.Center),
                 painter = painterResource(id = R.drawable.sky_high_watchers_logo),
                 contentDescription = "logo"
 
@@ -111,7 +113,7 @@ fun Login(navController: NavController, databaseHandle: DatabaseHandler, googleS
             text = "Hi, Welcome Back...",
             fontWeight = FontWeight.Bold,
             fontSize = 18.sp,
-            modifier = Modifier.padding(20.dp, 0.dp)
+            modifier = Modifier.padding(30.dp, 0.dp)
         )
         Spacer(modifier = Modifier.height(10.dp))
         // box 2
@@ -120,6 +122,7 @@ fun Login(navController: NavController, databaseHandle: DatabaseHandler, googleS
                 .fillMaxWidth()
                 .weight(0.7f)
                 .background(Color.White)
+                .padding(20.dp)
         ) {
 
             //column for input fields
