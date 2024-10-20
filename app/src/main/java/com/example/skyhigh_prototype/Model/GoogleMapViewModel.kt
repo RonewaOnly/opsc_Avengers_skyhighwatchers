@@ -7,7 +7,6 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.Location
 import android.net.Uri
-import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -15,24 +14,32 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Slider
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableDoubleStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat.getString
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.skyhigh_prototype.Intent.Hotspot
 import com.example.skyhigh_prototype.R
-import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
-import com.google.maps.android.compose.*
+import com.google.maps.android.compose.GoogleMap
+import com.google.maps.android.compose.Marker
+import com.google.maps.android.compose.MarkerState
+import com.google.maps.android.compose.rememberCameraPositionState
 
 @Composable
 fun MapScreen(
@@ -44,7 +51,7 @@ fun MapScreen(
     // Collect location and bird hotspots from ViewModels
     val userLocation by locationViewModel.location.collectAsState()
     val birdHotspots by birdViewModel.hotspot.collectAsState()
-    var selectedRange by remember { mutableStateOf(10.0) } // Default range to 10 km
+    var selectedRange by remember { mutableDoubleStateOf(10.0) } // Default range to 10 km
     var selectedHotspot by remember { mutableStateOf<Hotspot?>(null) }
 
     // Request location permission
@@ -134,10 +141,10 @@ fun getCurrentLocation(context: Context, onLocationReceived: (Location) -> Unit)
 
 @Composable
 fun RangeSelector(onRangeSelected: (Double) -> Unit) {
-    var selectedRange by remember { mutableStateOf(10.0) } // Default range to 10 km
+    var selectedRange by remember { mutableDoubleStateOf(10.0) } // Default range to 10 km
 
     Column {
-        Text(text = "Select travel range: ${selectedRange} km")
+        Text(text = "Select travel range: $selectedRange km")
         Slider(
             value = selectedRange.toFloat(),
             onValueChange = { selectedRange = it.toDouble() },
