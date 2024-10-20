@@ -106,7 +106,7 @@ fun UserProfileScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(Color.White)
-            .padding(top= 50.dp)
+            .padding(top= 120.dp)
     ) {
         item {
             // Profile Header
