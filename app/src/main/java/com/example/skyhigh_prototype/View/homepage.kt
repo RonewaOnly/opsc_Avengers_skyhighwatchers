@@ -116,7 +116,7 @@ fun Main(
         Spacer(
             modifier = Modifier
                 .height(106.dp)
-                .padding(0.dp)
+                .padding(120.dp)
 
         )
 
@@ -143,7 +143,7 @@ fun Main(
                     contentColor = Color.Black,
                     elevation = FloatingActionButtonDefaults.elevation(
                         defaultElevation = 0.dp,
-                        pressedElevation = 6.dp
+                        pressedElevation = 0.dp
                     )
                 )
             },
@@ -194,7 +194,8 @@ fun NavDrawer(navController: NavController, drawerState: DrawerState, scope: Cor
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White),
+            .background(Color.White)
+            .padding(top = 50.dp),
         verticalArrangement = Arrangement.SpaceBetween,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -209,7 +210,8 @@ fun NavDrawer(navController: NavController, drawerState: DrawerState, scope: Cor
 
             Image(
                 painter = painterResource(id = R.drawable.sky_high_watchers_logo),
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth()
+                    .padding(top = 20.dp),
                 contentDescription = null,
                 contentScale = ContentScale.FillWidth,
             )
@@ -386,6 +388,7 @@ fun Homepage(ebirdViewModel: BirdViewModel) {
     Scaffold { paddingValues ->
         Column(
             modifier = Modifier.fillMaxSize()
+                .padding(top = 50.dp)
         ) {
             Column(
                 modifier = Modifier
