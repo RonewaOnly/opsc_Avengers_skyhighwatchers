@@ -90,26 +90,48 @@ import kotlinx.coroutines.launch
 
 
 @Composable
-fun Main(@Suppress("UNUSED_PARAMETER") mapViewModel: MapboxViewModel , ebirdViewModel: BirdViewModel ,isDarkTheme: Boolean, onThemeChange: (Boolean) -> Unit) {
+fun Main(
+    @Suppress("UNUSED_PARAMETER") mapViewModel: MapboxViewModel,
+    ebirdViewModel: BirdViewModel,
+    isDarkTheme: Boolean,
+    onThemeChange: (Boolean) -> Unit
+) {
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     val rememberNavController = rememberNavController()
-    ModalNavigationDrawer(
 
+    ModalNavigationDrawer(
         drawerState = drawerState,
         drawerContent = {
-            ModalDrawerSheet { NavDrawer(navController = rememberNavController, drawerState = drawerState, scope = rememberCoroutineScope()) }
+            ModalDrawerSheet {
+                NavDrawer(
+                    navController = rememberNavController,
+                    drawerState = drawerState,
+                    scope = rememberCoroutineScope()
+                )
+            }
         },
     ) {
-        Spacer(modifier = Modifier
-            .height(40.dp)
-            .padding(20.dp))
-        Scaffold(
 
+        Spacer(
+            modifier = Modifier
+                .height(106.dp)
+                .padding(0.dp)
+
+        )
+
+        Scaffold(
             topBar = {
                 ExtendedFloatingActionButton(
                     text = { Text("") },
-                    icon = { Icon(Icons.Filled.Menu, contentDescription = "", tint = Color.Black, modifier = Modifier.size(90.dp)) },
+                    icon = {
+                        Icon(
+                            Icons.Filled.Menu,
+                            contentDescription = "Menu",
+                            tint = Color.Black,
+                            modifier = Modifier.size(100.dp).padding(0.dp, 50.dp, 50.dp, 0.dp)
+                        )
+                    },
                     onClick = {
                         scope.launch {
                             drawerState.apply {
@@ -132,10 +154,11 @@ fun Main(@Suppress("UNUSED_PARAMETER") mapViewModel: MapboxViewModel , ebirdView
                         Icon(
                             painter = painterResource(id = R.drawable.globe_solid),
                             contentDescription = "world icon",
-                            modifier = Modifier.size(35.dp)
+                            modifier = Modifier.size(35.dp) // Keep this size as per your design
                         )
                     },
-                    onClick = { rememberNavController.navigate("ViewMap") })
+                    onClick = { rememberNavController.navigate("ViewMap") }
+                )
             }
         ) { contentPadding ->
             // Screen content
@@ -153,7 +176,7 @@ fun Main(@Suppress("UNUSED_PARAMETER") mapViewModel: MapboxViewModel , ebirdView
                     PersonalCollection()
                 }
                 composable("ViewMap") {
-                    MapOption(rememberNavController, ebirdViewModel )
+                    MapOption(rememberNavController, ebirdViewModel)
                 }
                 composable("logout") {
                     Logout(rememberNavController)
@@ -200,7 +223,7 @@ fun NavDrawer(navController: NavController, drawerState: DrawerState, scope: Cor
                 .weight(0.7f)
                 .background(Color.White),
 
-        ) {
+            ) {
 
             //icon button for home
             IconButton(
@@ -388,7 +411,13 @@ fun Homepage(ebirdViewModel: BirdViewModel) {
             // Show different content based on selected tab
             when (selectedTabIndex) {
                 0 -> TabContent1()
-                1 -> TabContent2(ebirdViewModel,currentLocation.LATITUDE,-currentLocation.LONGITUDE, getString(context,R.string.ebird_api_key))
+                1 -> TabContent2(
+                    ebirdViewModel,
+                    currentLocation.LATITUDE,
+                    -currentLocation.LONGITUDE,
+                    getString(context, R.string.ebird_api_key)
+                )
+
                 2 -> TabContent3()
             }
         }
@@ -397,7 +426,8 @@ fun Homepage(ebirdViewModel: BirdViewModel) {
 
 @Composable
 fun TabContent1() {
-    val databaseClass = DatabaseHandler() // This is the global calling of the object for the class handling Firestore operations
+    val databaseClass =
+        DatabaseHandler() // This is the global calling of the object for the class handling Firestore operations
     val context = LocalContext.current
     var birdsObs by remember { mutableStateOf(listOf<Birds>()) }
 
@@ -419,7 +449,7 @@ fun TabContent1() {
             contentPadding = PaddingValues(vertical = 8.dp) // Padding inside LazyColumn
         ) {
             itemsIndexed(birdsObs) { index, item ->
-                Log.d("content","$birdsObs")
+                Log.d("content", "$birdsObs")
                 // State management for each card
                 val chipStates = remember { mutableStateOf(List(3) { false }) }
 
@@ -462,9 +492,10 @@ fun TabContent1() {
                                 InputChip(
                                     onClick = {
                                         // Toggle the selected state of the clicked chip
-                                        chipStates.value = chipStates.value.mapIndexed { i, selected ->
-                                            if (i == chipIndex) !selected else selected
-                                        }
+                                        chipStates.value =
+                                            chipStates.value.mapIndexed { i, selected ->
+                                                if (i == chipIndex) !selected else selected
+                                            }
                                     },
                                     label = { Text("Chip ${chipIndex + 1}") },
                                     selected = isSelected,
@@ -477,7 +508,9 @@ fun TabContent1() {
                                         )
                                     },
                                     colors = InputChipDefaults.inputChipColors(
-                                        containerColor = if (isSelected) Color(0xFFB2DFDB) else Color(0xFFE0E0E0), // Change background color based on selection
+                                        containerColor = if (isSelected) Color(0xFFB2DFDB) else Color(
+                                            0xFFE0E0E0
+                                        ), // Change background color based on selection
                                         labelColor = Color.Black // Black text color for better readability
                                     ),
                                     modifier = Modifier.padding(end = 8.dp) // Padding between chips
@@ -490,7 +523,6 @@ fun TabContent1() {
         }
     }
 }
-
 
 
 @Composable
@@ -513,6 +545,7 @@ fun TabContent2(viewModel: BirdViewModel, lat: Double, lng: Double, apiKey: Stri
                         .size(48.dp) // Larger size for better visibility
                 )
             }
+
             errorMessage != null -> {
                 Text(
                     text = errorMessage ?: "",
@@ -524,6 +557,7 @@ fun TabContent2(viewModel: BirdViewModel, lat: Double, lng: Double, apiKey: Stri
                     modifier = Modifier.align(Alignment.Center)
                 )
             }
+
             else -> {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
@@ -536,7 +570,7 @@ fun TabContent2(viewModel: BirdViewModel, lat: Double, lng: Double, apiKey: Stri
                         Button(
                             onClick = { viewModel.loadMore(lat, lng, apiKey) },
                             colors = ButtonColors(
-                                disabledContentColor = Color.Gray ,
+                                disabledContentColor = Color.Gray,
                                 containerColor = Color(0xFF9C27B0),
                                 disabledContainerColor = Color.Magenta,
                                 //backgroundColor = Color(0xFF9C27B0), // Light purple
