@@ -336,7 +336,7 @@ fun Login(navController: NavController, databaseHandle: DatabaseHandler, googleS
                     }
 
                 }
-                // Column for "Don't have an account?" and "Register" button
+                // Column for "Don't have an account?" and "register" button
                 Row(
                     modifier = Modifier.padding(top = 30.dp),
                     horizontalArrangement = Arrangement.Center, // Center buttons horizontally

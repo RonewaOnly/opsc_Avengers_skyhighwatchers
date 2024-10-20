@@ -2,8 +2,6 @@
 
 package com.example.skyhigh_prototype.View
 
-import android.os.Handler
-import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -35,6 +33,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.example.skyhigh_prototype.Model.DatabaseHandler
 import com.example.skyhigh_prototype.R
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -65,7 +64,8 @@ fun Register(navController: NavController) {
     var auth : FirebaseAuth
     var firestore: FirebaseFirestore
 
-
+    //DatabaseHandler in register screen
+    val dbClass = DatabaseHandler()
     //column for page
     Column(
         modifier = Modifier
@@ -263,7 +263,7 @@ fun Register(navController: NavController) {
                 //end of confirm password
                 //---
                 Spacer(modifier = Modifier.height(30.dp))
-                // Register button
+                // register button
                 Button(
                     onClick = {
                         // Validate all input fields before proceeding
@@ -272,7 +272,6 @@ fun Register(navController: NavController) {
                         emailError = ValidateForms.validateEmail(email)
                         passwordError = ValidateForms.validatePassword(password)
                         confirmPasswordError = ValidateForms.validateConfirmPassword(password, confirmPassword)
-
                         //initialising firebase instances
                         auth = FirebaseAuth.getInstance()
                         firestore = FirebaseFirestore.getInstance()
@@ -280,50 +279,50 @@ fun Register(navController: NavController) {
                         // If all validations pass, navigate to the login screen
                         // If no errors, proceed with registration
                         if (firstnameError.isEmpty() && lastnameError.isEmpty() && emailError.isEmpty() && passwordError.isEmpty() && confirmPasswordError.isEmpty()) {
-
-                            //using firebase auth to create a user with authentication
-                            auth.createUserWithEmailAndPassword(email, password).addOnSuccessListener {
-
-                                //get current user id
-                                val userID = auth.currentUser?.uid
-
-                                //using hash map to store user details to firestore database
-                                val user = hashMapOf(
-                                    "First Name" to  firstname,
-                                    "Last Name" to lastname,
-                                    "Email" to email
-
-                                )
-
-                                //creating user with id
-                                if(userID != null){
-
-                                    //adding user to collection
-                                    firestore.collection("Users").document(userID).set(user).addOnFailureListener {
-                                        //to alert user
-                                        Toast.makeText(context,"Unable to save user details to database", Toast.LENGTH_LONG).show()
-                                    }
-                                }
-
-                                //alert user
-                                Toast.makeText(context,"Successful Account Creation\nYou will be redirected to Login Page", Toast.LENGTH_LONG).show()
-
-                                //to delay intent
-                                @Suppress("DEPRECATION")
-                                Handler().postDelayed({
-
-                                    //navigate to login
-                                    navController.navigate("login")
-
-                                }, 2000)
-
-
-                            }.addOnFailureListener {
-
-                                //to alert user
-                                Toast.makeText(context,"Email already exit", Toast.LENGTH_LONG).show()
-
-                            }
+                                dbClass.register(firstname, lastname, email, password, navController, context)
+//                            //using firebase auth to create a user with authentication
+//                            auth.createUserWithEmailAndPassword(email, password).addOnSuccessListener {
+//
+//                                //get current user id
+//                                val userID = auth.currentUser?.uid
+//
+//                                //using hash map to store user details to firestore database
+//                                val user = hashMapOf(
+//                                    "First Name" to  firstname,
+//                                    "Last Name" to lastname,
+//                                    "Email" to email
+//
+//                                )
+//
+//                                //creating user with id
+//                                if(userID != null){
+//
+//                                    //adding user to collection
+//                                    firestore.collection("Users").document(userID).set(user).addOnFailureListener {
+//                                        //to alert user
+//                                        Toast.makeText(context,"Unable to save user details to database", Toast.LENGTH_LONG).show()
+//                                    }
+//                                }
+//
+//                                //alert user
+//                                Toast.makeText(context,"Successful Account Creation\nYou will be redirected to Login Page", Toast.LENGTH_LONG).show()
+//
+//                                //to delay intent
+//                                @Suppress("DEPRECATION")
+//                                Handler().postDelayed({
+//
+//                                    //navigate to login
+//                                    navController.navigate("login")
+//
+//                                }, 2000)
+//
+//
+//                            }.addOnFailureListener {
+//
+//                                //to alert user
+//                                Toast.makeText(context,"Email already exit", Toast.LENGTH_LONG).show()
+//
+//                            }
                         }
                     },
                     shape = RoundedCornerShape(size = 10.dp),
