@@ -27,6 +27,7 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -66,6 +67,7 @@ import com.example.skyhigh_prototype.ui.theme.LightSurface
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collect
 import java.util.Locale
 
 class MainActivity : ComponentActivity() {
@@ -107,13 +109,6 @@ class MainActivity : ComponentActivity() {
 //        } else {
 //            requestLocationPermission()
 //        }
-
-        // Use your API key from strings.xml
-        val apiKey = getString(R.string.ebird_api_key)
-
-        // Fetch bird observations (example latitude and longitude)
-        viewModel.getRecentBirdObservations(currentLocations.LATITUDE, currentLocations.LONGITUDE, apiKey)
-        Log.e("The locations","Latitude: ${-currentLocations.LATITUDE},Longitude: ${currentLocations.LONGITUDE}")
         setContent {
             val navController = rememberNavController()
 
@@ -122,6 +117,8 @@ class MainActivity : ComponentActivity() {
                 MyAppNavHost(fusedLocationProviderClient,navController = navController, viewModel,isDarkTheme, onThemeChange = { isDarkTheme = it },databaseHandle,googleSignInLauncher)
 
             }
+
+
 
 
 
@@ -169,7 +166,7 @@ fun SkyHigh(fusedLocationProviderClient: FusedLocationProviderClient, mainActivi
             ForgotPassword(rememberNav)
         }
         composable("homepage") {
-            Main( mainActivity.mapboxViewModel,ebirdView, isDarkTheme, onThemeChange) // Passes ViewModel to Main Composable
+            Main( mainActivity.mapboxViewModel,ebirdView, isDarkTheme, onThemeChange,databaseHandle) // Passes ViewModel to Main Composable
         }
     }
 }

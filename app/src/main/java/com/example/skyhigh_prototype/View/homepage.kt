@@ -83,6 +83,7 @@ import com.example.skyhigh_prototype.Data.Location
 import com.example.skyhigh_prototype.Model.BirdViewModel
 import com.example.skyhigh_prototype.Model.DatabaseHandler
 import com.example.skyhigh_prototype.Model.MapboxViewModel
+import com.example.skyhigh_prototype.Model.currentLocations
 import com.example.skyhigh_prototype.R
 import com.example.skyhigh_prototype.R.color.dark_blue
 import kotlinx.coroutines.CoroutineScope
@@ -94,7 +95,8 @@ fun Main(
     @Suppress("UNUSED_PARAMETER") mapViewModel: MapboxViewModel,
     ebirdViewModel: BirdViewModel,
     isDarkTheme: Boolean,
-    onThemeChange: (Boolean) -> Unit
+    onThemeChange: (Boolean) -> Unit,
+    databaseHandler: DatabaseHandler
 ) {
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
@@ -167,10 +169,10 @@ fun Main(
                     Homepage(ebirdViewModel)
                 }
                 composable("settings") {
-                    NavOption(isDarkTheme, onThemeChange)
+                    NavOption(isDarkTheme, onThemeChange,databaseHandler)
                 }
                 composable("profile") {
-                    Profile(rememberNavController)
+                    Profile(rememberNavController,databaseHandler)
                 }
                 composable("collection") {
                     PersonalCollection()
@@ -382,7 +384,6 @@ fun Homepage(ebirdViewModel: BirdViewModel) {
     //var enabled by remember { mutableStateOf(true) }
     // State to track the selected tab index
     var selectedTabIndex by remember { mutableIntStateOf(0) }
-    val currentLocation = Location
     // Tab titles
     val tabs = listOf("Personal Cards", "Recent Observation", "Tab 3")
     Scaffold { paddingValues ->
@@ -416,8 +417,8 @@ fun Homepage(ebirdViewModel: BirdViewModel) {
                 0 -> TabContent1()
                 1 -> TabContent2(
                     ebirdViewModel,
-                    currentLocation.LATITUDE,
-                    -currentLocation.LONGITUDE,
+                    currentLocations.LATITUDE,
+                    currentLocations.LONGITUDE,
                     getString(context, R.string.ebird_api_key)
                 )
 
@@ -599,6 +600,8 @@ fun TabContent2(viewModel: BirdViewModel, lat: Double, lng: Double, apiKey: Stri
             }
         }
     }
+
+    Log.d("location for recent observation: ","LAT: $lat, LONG: $lng")
 }
 
 @Composable
