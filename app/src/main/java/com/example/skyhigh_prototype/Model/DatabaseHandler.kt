@@ -10,9 +10,13 @@ import com.google.firebase.Timestamp
 import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
 import androidx.navigation.NavController
+import com.example.skyhigh_prototype.Data.Achievement
 import com.example.skyhigh_prototype.Data.BirdFeed
 import com.example.skyhigh_prototype.Data.BirdTip
 import com.example.skyhigh_prototype.Data.Birds
+import com.example.skyhigh_prototype.Data.CustomArea
+import com.example.skyhigh_prototype.Data.Reports
+import com.example.skyhigh_prototype.Data.Settings
 import com.example.skyhigh_prototype.Data.UserDetails
 import com.example.skyhigh_prototype.R
 import com.google.android.gms.auth.api.signin.GoogleSignIn
@@ -110,8 +114,8 @@ class DatabaseHandler{
 //
 //            )
 
-            val hashed = hashPassword(password)
-            val user = UserDetails(firstname,lastname,email,hashed);
+            //val hashed = hashPassword(password)
+            val user = UserDetails(firstname,lastname,email);
             //creating user with id
             if(userID != null){
                 //adding user to collection
@@ -347,6 +351,266 @@ class DatabaseHandler{
                 onFailure(exception) // Trigger error callback
             }
     }
+    //updating the setting
+    fun updateSettings(
+        notification: Boolean = false,
+        unitOfDistance: Boolean = true,
+        language: String = "en",
+        theme: Int = R.string.switch_to_light_mode,
+        onSuccess: (String) -> Unit,
+        onFailure: (Exception) -> Unit
+    ) {
+        auth = FirebaseAuth.getInstance()
+        val userID = auth.currentUser?.uid.toString()
+
+        // Create a settings map to update Firestore
+        val settingsMap = hashMapOf(
+            "notification" to notification,
+            "distance" to unitOfDistance,
+            "languageRange" to language,
+            "theme" to theme
+        )
+
+        // Update Firestore with the structured settings map
+        db.collection("Users").document(userID)
+            .update("settings", settingsMap)
+            .addOnSuccessListener {
+                onSuccess("Updated successfully :)")
+            }
+            .addOnFailureListener { error ->
+                onFailure(error)
+            }
+    }
+    fun createCustomArea(areaName: String, onSuccess: () -> Unit, onFailure: (Exception) -> Unit) {
+        auth = FirebaseAuth.getInstance()
+        val userID = auth.currentUser?.uid.toString()
+
+        // Create a new custom area with a unique areaId
+        val newArea = CustomArea(
+            areaId = db.collection("Users").document(userID).collection("CustomAreas").document().id,
+            name = areaName
+        )
+        // Add the new area to the customArea array using FieldValue.arrayUnion
+        db.collection("Users").document(userID)
+            .update("customArea", FieldValue.arrayUnion(newArea))
+            .addOnSuccessListener {
+                onSuccess()
+            }
+            .addOnFailureListener { error ->
+                onFailure(error)
+            }
+    }
+
+
+    fun updateCustomArea(areaId: String, name: String, locationDesc: String, sightings: Int, onSuccess: () -> Unit, onFailure: (Exception) -> Unit) {
+        auth = FirebaseAuth.getInstance()
+        val userID = auth.currentUser?.uid.toString()
+
+        // Retrieve the current custom areas for the user
+        db.collection("Users").document(userID).get()
+            .addOnSuccessListener { document ->
+                val customAreas = document.get("customArea") as? List<Map<String, Any?>>
+                if (customAreas != null) {
+                    // Convert the list of maps back to CustomArea objects
+                    val updatedAreas = customAreas.map { areaMap ->
+                        if (areaMap["areaId"] == areaId) {
+                            CustomArea(
+                                areaId = areaId,
+                                name = name,
+                                locationDescription = locationDesc,
+                                sightingsInArea = sightings
+                            )
+                        } else {
+                            CustomArea(
+                                areaId = areaMap["areaId"] as String?,
+                                name = areaMap["name"] as String?,
+                                locationDescription = areaMap["locationDescription"] as String?,
+                                sightingsInArea = (areaMap["sightingsInArea"] as? Long)?.toInt() ?: 0
+                            )
+                        }
+                    }
+
+                    // Update the customArea array with the modified areas
+                    db.collection("Users").document(userID)
+                        .update("customArea", updatedAreas)
+                        .addOnSuccessListener {
+                            onSuccess()
+                        }
+                        .addOnFailureListener { error ->
+                            onFailure(error)
+                        }
+                } else {
+                    onFailure(Exception("No custom areas found"))
+                }
+            }
+            .addOnFailureListener { error ->
+                onFailure(error)
+            }
+    }
+
+    fun fetchCustomAreas(onSuccess: (List<CustomArea>) -> Unit, onFailure: (Exception) -> Unit) {
+        auth = FirebaseAuth.getInstance()
+        val userID = auth.currentUser?.uid.toString()
+
+        // Get the user document from Firestore
+        db.collection("Users").document(userID).get()
+            .addOnSuccessListener { document ->
+                if (document.exists()) {
+                    // Fetch the customArea field
+                    val customAreas = document.get("customArea") as? List<Map<String, Any?>>
+
+                    if (customAreas != null) {
+                        // Map each area in Firestore to a CustomArea object
+                        val areasList = customAreas.map { areaMap ->
+                            CustomArea(
+                                areaId = areaMap["areaId"] as String?,
+                                name = areaMap["name"] as String?,
+                                locationDescription = areaMap["locationDescription"] as String?,
+                                sightingsInArea = (areaMap["sightingsInArea"] as? Long)?.toInt() ?: 0
+                            )
+                        }
+                        // Pass the list of CustomArea objects to the success callback
+                        onSuccess(areasList)
+                    } else {
+                        onSuccess(emptyList())  // If no custom areas, return an empty list
+                    }
+                } else {
+                    onFailure(Exception("User document does not exist"))
+                }
+            }
+            .addOnFailureListener { error ->
+                onFailure(error)
+            }
+    }
+    fun fetchUserDetails(onSuccess: (UserDetails) -> Unit, onFailure: (Exception) -> Unit) {
+        auth = FirebaseAuth.getInstance()
+        val userID = auth.currentUser?.uid.toString()
+
+        // Get the user document from Firestore
+        db.collection("Users").document(userID).get()
+            .addOnSuccessListener { document ->
+                if (document.exists()) {
+                    // Convert Firestore data to a UserDetails object
+                    val userDetails = UserDetails(
+                        firstname = document.getString("firstname") ?: "",
+                        lastname = document.getString("lastname") ?: "",
+                        email = document.getString("email") ?: "",
+                        bio = document.getString("bio") ?: "",
+                        location = document.getString("location") ?: "",
+                        profilePic = document.getString("profilePic") ?: "",
+
+                        // Convert settings map back to Settings object
+                        settings = listOf(
+                            document.get("settings")?.let { settingsMap ->
+                                if (settingsMap is Map<*, *>) {
+                                        Settings(
+                                        notification = settingsMap["notification"] as? Boolean ?: false,
+                                        distance = settingsMap["distance"] as? Boolean ?: true,
+                                        languageRange = settingsMap["languageRange"] as? String ?: "en",
+                                        theme = settingsMap["theme"] as? Int ?: R.string.switch_to_light_mode
+                                    )
+                                } else null
+                            }
+                        ),
+
+                        // Convert customArea array back to a list of CustomArea objects
+                        customArea = (document.get("customArea") as? List<Map<String, Any?>>)?.map { areaMap ->
+                            CustomArea(
+                                areaId = areaMap["areaId"] as String?,
+                                name = areaMap["name"] as String?,
+                                locationDescription = areaMap["locationDescription"] as String?,
+                                sightingsInArea = (areaMap["sightingsInArea"] as? Long)?.toInt() ?: 0
+                            )
+                        } ?: emptyList(),
+                        sightingsCount = 0.0,
+                        // Convert favoriteBirds array back to a list of strings
+                        favoriteBirds = document.get("favoriteBirds") as? List<String> ?: emptyList(),
+
+                        // Convert reports array back to a list of Reports objects
+                        reports = (document.get("reports") as? List<Map<String, Any?>>)?.map { reportMap ->
+                            Reports(
+                                reportId = reportMap["reportId"] as String?, // Assuming the Reports class has this structure
+                                reportDescription  = reportMap["description"] as String?,
+                                reportName = reportMap["reportName"] as String?,
+                                reportDate = reportMap["reportDate"] as Timestamp
+                            )
+                        } ?: emptyList(),
+
+                        // Convert achievements array back to a list of Achievement objects
+                        achievements = (document.get("achievements") as? List<Map<String, Any?>>)?.map { achievementMap ->
+                            Achievement(
+                                name = achievementMap["name"] as String?,
+                                description = achievementMap["description"] as String?
+                            )
+                        } ?: emptyList()
+                    )
+
+                    // Return the UserDetails object to the success callback
+                    onSuccess(userDetails)
+
+                } else {
+                    onFailure(Exception("User document does not exist"))
+                }
+            }
+            .addOnFailureListener { error ->
+                onFailure(error)
+            }
+    }
+    fun createReport(reportName: String, reportDescription: String, onSuccess: () -> Unit, onFailure: (Exception) -> Unit) {
+        auth = FirebaseAuth.getInstance()
+        val userID = auth.currentUser?.uid.toString()
+
+        // Generate a unique report ID
+        val reportId = db.collection("Users").document(userID).collection("Reports").document().id
+
+        // Create a new Reports object
+        val newReport = Reports(
+            reportId = reportId,
+            reportName = reportName,
+            reportDescription = reportDescription
+        )
+
+        // Send the new report to Firestore
+        db.collection("Users").document(userID)
+            .update("reports", FieldValue.arrayUnion(newReport))
+            .addOnSuccessListener {
+                onSuccess()
+            }
+            .addOnFailureListener { error ->
+                onFailure(error)
+            }
+    }
+    fun fetchReports(onSuccess: (List<Reports>) -> Unit, onFailure: (Exception) -> Unit) {
+        auth = FirebaseAuth.getInstance()
+        val userID = auth.currentUser?.uid.toString()
+
+        // Get the user's reports array from Firestore
+        db.collection("Users").document(userID).get()
+            .addOnSuccessListener { document ->
+                if (document.exists()) {
+                    // Extract the reports array and map it to a list of Reports objects
+                    val reportsList = (document.get("reports") as? List<Map<String, Any?>>)?.map { reportMap ->
+                        Reports(
+                            reportId = reportMap["reportId"] as? String ?: "",
+                            reportName = reportMap["reportName"] as? String ?: "",
+                            reportDescription = reportMap["reportDescription"] as? String ?: "",
+                            reportDate = reportMap["reportDate"] as? Timestamp ?: Timestamp.now()
+                        )
+                    } ?: emptyList()
+
+                    // Return the list of reports to the success callback
+                    onSuccess(reportsList)
+
+                } else {
+                    onFailure(Exception("User document does not exist"))
+                }
+            }
+            .addOnFailureListener { error ->
+                onFailure(error)
+            }
+    }
+
+
     // Hash password using SHA-256
     fun hashPassword(password: String): String {
         val bytes = MessageDigest.getInstance("SHA-256").digest(password.toByteArray())
