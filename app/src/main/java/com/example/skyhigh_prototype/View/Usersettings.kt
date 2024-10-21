@@ -1,9 +1,8 @@
 package com.example.skyhigh_prototype.View
 
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.Orientation
-import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -17,29 +16,35 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import coil.compose.rememberImagePainter
+import com.example.skyhigh_prototype.Data.UserDetails
+import com.example.skyhigh_prototype.Model.DatabaseHandler
 import com.google.firebase.Timestamp
 
 @Composable
-fun Profile(navController: NavController){
+fun Profile(navController: NavController, databaseHandler: DatabaseHandler){
+    val context = LocalContext.current
     Text(text = "Profile")
     //Testing data
     val userProfile = UserProfile(
@@ -81,8 +86,15 @@ fun Profile(navController: NavController){
             )
         )
     )
+    var userView  by remember { mutableStateOf(UserDetails()) }
+
+    databaseHandler.fetchUserDetails(onSuccess = {
+        userView = it
+    }, onFailure = {
+        Toast.makeText(context,"",Toast.LENGTH_SHORT).show()
+    })
     UserProfileScreen(
-        userProfile = userProfile,
+        userProfile = userView,
         onEditCustomArea = {},
         onDeleteCustomArea = {},
         onAddCustomArea = { },
@@ -94,9 +106,9 @@ fun Profile(navController: NavController){
 }
 @Composable
 fun UserProfileScreen(
-    userProfile: UserProfile,
-    onEditCustomArea: (CustomArea) -> Unit,
-    onDeleteCustomArea: (CustomArea) -> Unit,
+    userProfile: UserDetails,
+    onEditCustomArea: (com.example.skyhigh_prototype.Data.CustomArea?) -> Unit,
+    onDeleteCustomArea: (com.example.skyhigh_prototype.Data.CustomArea?) -> Unit,
     onAddCustomArea: () -> Unit,
     onSettingsClick: () -> Unit,
     onLogoutClick: () -> Unit
@@ -125,7 +137,7 @@ fun UserProfileScreen(
         item {
             // Custom Areas Section
             CustomAreasSection(
-                customAreas = userProfile.customAreas,
+                customAreas = userProfile.customArea,
                 onEdit = onEditCustomArea,
                 onDelete = onDeleteCustomArea,
                 onAdd = onAddCustomArea
@@ -166,10 +178,10 @@ fun UserProfileScreen(
 }
 
 @Composable
-fun ProfileHeader(userProfile: UserProfile) {
+fun ProfileHeader(userProfile: UserDetails) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Image(
-            painter = rememberImagePainter(userProfile.profilePictureUrl),
+            painter = rememberImagePainter(userProfile.profilePic),
             contentDescription = "Profile Picture",
             modifier = Modifier
                 .size(100.dp)
@@ -177,18 +189,18 @@ fun ProfileHeader(userProfile: UserProfile) {
                 .background(Color.Gray)
         )
         Spacer(modifier = Modifier.height(8.dp))
-        Text(text = userProfile.username, fontSize = 24.sp, fontWeight = FontWeight.Bold)
-        Text(text = userProfile.location, fontSize = 16.sp, color = Color.Gray)
+        //Text(text = userProfile.username, fontSize = 24.sp, fontWeight = FontWeight.Bold)
+        Text(text = "${userProfile.location}", fontSize = 16.sp, color = Color.Gray)
         Spacer(modifier = Modifier.height(8.dp))
-        Text(text = userProfile.bio, fontSize = 14.sp, textAlign = TextAlign.Center)
+        Text(text = "${userProfile.bio}", fontSize = 14.sp, textAlign = TextAlign.Center)
     }
 }
 
 @Composable
-fun StatisticsSection(userProfile: UserProfile) {
+fun StatisticsSection(userProfile: UserDetails) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(text = "Total Sightings", fontSize = 18.sp, fontWeight = FontWeight.Bold)
-        Text(text = userProfile.sightingsCount.toString(), fontSize = 36.sp, fontWeight = FontWeight.Bold)
+        //Text(text = userProfile.sightingsCount.toString(), fontSize = 36.sp, fontWeight = FontWeight.Bold)
         Row(horizontalArrangement = Arrangement.Center, modifier = Modifier.fillMaxWidth()) {
             userProfile.favoriteBirds.forEach { bird ->
                 Icon(
@@ -203,9 +215,9 @@ fun StatisticsSection(userProfile: UserProfile) {
 
 @Composable
 fun CustomAreasSection(
-    customAreas: List<CustomArea>,
-    onEdit: (CustomArea) -> Unit,
-    onDelete: (CustomArea) -> Unit,
+    customAreas: List<com.example.skyhigh_prototype.Data.CustomArea?>,
+    onEdit: (com.example.skyhigh_prototype.Data.CustomArea?) -> Unit,
+    onDelete: (com.example.skyhigh_prototype.Data.CustomArea?) -> Unit,
     onAdd: () -> Unit
 ) {
     Column {
@@ -225,9 +237,9 @@ fun CustomAreasSection(
                     .padding(vertical = 4.dp)
             ) {
                 Column(modifier = Modifier.padding(8.dp)) {
-                    Text(text = area.name, fontSize = 16.sp, fontWeight = FontWeight.Bold)
-                    Text(text = area.locationDescription, fontSize = 14.sp, color = Color.Gray)
-                    Text(text = "Sightings: ${area.sightingsInArea}", fontSize = 14.sp)
+                    Text(text = "${area?.name}", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                    Text(text = "${area?.locationDescription}", fontSize = 14.sp, color = Color.Gray)
+                    Text(text = "Sightings: ${area?.sightingsInArea}", fontSize = 14.sp)
                     Row {
                         TextButton(onClick = { onEdit(area) }) {
                             Text(text = "Edit")
@@ -243,7 +255,7 @@ fun CustomAreasSection(
 }
 
 @Composable
-fun RecentSightingsSection(sightingsCount: Int) {
+fun RecentSightingsSection(sightingsCount: Double) {
     Column {
         Text(text = "Recent Sightings", fontSize = 18.sp, fontWeight = FontWeight.Bold)
         // Assuming a list of recent sightings would be displayed here
@@ -251,7 +263,7 @@ fun RecentSightingsSection(sightingsCount: Int) {
         if (sightingsCount > 0) {
             // Display the list of sightings
             LazyColumn(modifier = Modifier.height(200.dp)) {
-                items(sightingsCount) { sighting ->
+                items(sightingsCount.toInt()) { sighting ->
                     Text(text = sighting.toString()) // Customize with more details
                 }
             }
@@ -262,7 +274,7 @@ fun RecentSightingsSection(sightingsCount: Int) {
 }
 
 @Composable
-fun AchievementsSection(achievements: List<Achievement>) {
+fun AchievementsSection(achievements: List<com.example.skyhigh_prototype.Data.Achievement?>) {
     Column {
         Text(text = "Achievements", fontSize = 18.sp, fontWeight = FontWeight.Bold)
         LazyVerticalGrid(columns = GridCells.Fixed(3),modifier = Modifier.height(200.dp)) {
@@ -270,10 +282,10 @@ fun AchievementsSection(achievements: List<Achievement>) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(8.dp)) {
                     Icon(
                         painter = rememberImagePainter("https://cdn0.iconfinder.com/data/icons/business-vol-2-16/74/13-1024.png"),
-                        contentDescription = achievement.name,
+                        contentDescription = achievement?.name,
                         modifier = Modifier.size(40.dp)
                     )
-                    Text(text = achievement.name, fontSize = 12.sp, textAlign = TextAlign.Center)
+                    Text(text = "${achievement?.name}", fontSize = 12.sp, textAlign = TextAlign.Center)
                 }
             }
         }

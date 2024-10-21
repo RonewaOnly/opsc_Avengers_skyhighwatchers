@@ -5,6 +5,8 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
 import android.os.Build
+import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -19,7 +21,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.Button
-import androidx.compose.material.ButtonColors
 import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.DropdownMenu
 import androidx.compose.material.DropdownMenuItem
@@ -48,11 +49,13 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.skyhigh_prototype.Data.CustomArea
+import com.example.skyhigh_prototype.Model.DatabaseHandler
 import com.example.skyhigh_prototype.R
 import com.example.skyhigh_prototype.updateAppLocale
 
 @Composable
-fun NavOption(isDarkTheme: Boolean, onThemeChange: (Boolean) -> Unit) {
+fun NavOption(isDarkTheme: Boolean, onThemeChange: (Boolean) -> Unit,databaseHandler: DatabaseHandler) {
     val rememberNav = rememberNavController()
 
     NavHost(navController = rememberNav, startDestination = "setting") {
@@ -60,13 +63,13 @@ fun NavOption(isDarkTheme: Boolean, onThemeChange: (Boolean) -> Unit) {
             Settings(rememberNav)
         }
         composable("general") {
-            navigateToGeneralSettings(rememberNav, isDarkTheme, onThemeChange)
+            navigateToGeneralSettings(rememberNav, isDarkTheme, onThemeChange,databaseHandler)
         }
         composable("customArea") {
-            navigateToCustomAreas(rememberNav)
+            NavigateToCustomAreas(rememberNav,databaseHandler)
         }
         composable("Report") {
-            navigateToReport(rememberNav)
+            navigateToReport(rememberNav,databaseHandler)
         }
         composable("App_info") {
             navigateToAppInfo(rememberNav)
@@ -131,13 +134,14 @@ fun Settings(navController: NavController) {
 @SuppressLint("ComposableNaming")
 @Composable
 fun navigateToGeneralSettings(
-    navController: NavController, isDarkTheme: Boolean, onThemeChange: (Boolean) -> Unit
+    navController: NavController, isDarkTheme: Boolean, onThemeChange: (Boolean) -> Unit,databaseHandler:DatabaseHandler
 ) {
     val context = LocalContext.current
-    var notificationsEnabled by remember { mutableStateOf(true) }
+    var notificationsEnabled by remember { mutableStateOf(false) }
     //variable for metric system change
     var useKilometers by remember { mutableStateOf(true) }
-
+    var chosenLanguage by remember { mutableStateOf("") }
+    var themeChosen by remember { mutableStateOf(0) }
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -169,6 +173,13 @@ fun navigateToGeneralSettings(
                         context, context.getString(R.string.app_name), "Notifications disabled!"
                     )
                 }
+
+
+                databaseHandler.updateSettings(notification = notificationsEnabled ,onSuccess = {
+                    Toast.makeText(context,it,Toast.LENGTH_SHORT).show()
+                }, onFailure = {
+                    Log.e("Updating error on settings: ",it.message.toString())
+                })
             })
         }
 
@@ -193,7 +204,12 @@ fun navigateToGeneralSettings(
                 modifier = Modifier.weight(1f)
             )
 
-            Switch(checked = useKilometers, onCheckedChange = { useKilometers = it })
+            Switch(checked = useKilometers, onCheckedChange = { useKilometers = it
+                databaseHandler.updateSettings(unitOfDistance = useKilometers ,onSuccess = {
+                    Toast.makeText(context,it,Toast.LENGTH_SHORT).show()
+                }, onFailure = {
+                    Log.e("Updating error on settings: ",it.message.toString())
+                })})
         }
 
         Spacer(modifier = Modifier.height(20.dp))
@@ -206,13 +222,27 @@ fun navigateToGeneralSettings(
         OutlinedButton(
             onClick = {
                 onThemeChange(!isDarkTheme)  // Toggle the theme between Light and Dark
+                themeChosen = if (isDarkTheme){
+                    R.string.switch_to_light_mode
+                }else{
+
+                    R.string.switch_to_dark_mode
+
+                }
+                databaseHandler.updateSettings(theme=themeChosen ,onSuccess = {
+                    Toast.makeText(context,it,Toast.LENGTH_SHORT).show()
+                }, onFailure = {
+                    Log.e("Updating error on settings: ",it.message.toString())
+                })
             }, modifier = Modifier.fillMaxWidth()
         ) {
             Text(
-                text = if (isDarkTheme) stringResource(R.string.switch_to_light_mode) else stringResource(
+                text = if (isDarkTheme) stringResource(R.string.switch_to_light_mode)  else stringResource(
                     R.string.switch_to_dark_mode
                 ), textAlign = TextAlign.Center
             )
+
+
         }
         Spacer(modifier = Modifier.height(20.dp))
 
@@ -227,8 +257,14 @@ fun navigateToGeneralSettings(
             sendNotification(
                 context, "Language Changed", "App language changed to $selectedLanguage"
             )
+            chosenLanguage = selectedLanguage//this variable will be used for the updating to the database
         })
 
+//        databaseHandler.updateSettings(notificationsEnabled,useKilometers,chosenLanguage,themeChosen ,onSuccess = {
+//            Toast.makeText(context,it,Toast.LENGTH_SHORT).show()
+//        }, onFailure = {
+//            Log.e("Updating error on settings: ",it.message.toString())
+//        })
         Spacer(modifier = Modifier.height(20.dp))
         //delete account section
         Button(
@@ -321,14 +357,14 @@ fun sendNotification(context: Context, title: String, message: String) {
 
 // Function to navigate to Custom Areas
 @Composable
-fun navigateToCustomAreas(navController: NavController) {
-    var customAreas by remember { mutableStateOf(listOf("Area 1", "Area 2")) }
+fun NavigateToCustomAreas(navController: NavController,databaseHandler:DatabaseHandler) {
+    var customAreas by remember { mutableStateOf(listOf<CustomArea>()) }
     var newAreaName by remember { mutableStateOf("") }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(top = 60.dp)
+            .padding(top = 120.dp)
     ) {
         Text(text = stringResource(R.string.define_custom_areas))
 
@@ -338,8 +374,11 @@ fun navigateToCustomAreas(navController: NavController) {
 
         OutlinedButton(onClick = {
             if (newAreaName.isNotBlank()) {
-                customAreas = customAreas + newAreaName
-                newAreaName = ""
+                databaseHandler.createCustomArea(newAreaName, onSuccess = {}, onFailure = {
+                    Log.e("Custom Area creation error: ","${it.message}")
+                })
+//                customAreas = customAreas + newAreaName
+//                newAreaName = ""
             }
         }) {
             Text(text = stringResource(R.string.add_new_area))
@@ -347,29 +386,35 @@ fun navigateToCustomAreas(navController: NavController) {
 
         Text(text = stringResource(R.string.manage_existing_areas))
 
+
+        databaseHandler.fetchCustomAreas(onSuccess = {
+            customAreas = it
+        }, onFailure = {
+            Log.e("Fetching the name of the area failure:  ","${it.message}")
+        })
         LazyColumn {
             items(customAreas) { area ->
-                Text(text = area)
+                Text(text = "${area.name}")
                 OutlinedButton(onClick = {
                     customAreas = customAreas - area
                 }) {
                     Text(text = stringResource(R.string.delete))
                 }
-            }
+           }
         }
     }
 }
 
 // Function to navigate to Report
 @Composable
-fun navigateToReport(navController: NavController) {
+fun navigateToReport(navController: NavController,databaseHandler:DatabaseHandler) {
     var reports by remember { mutableStateOf(listOf<String>()) }
     var newReport by remember { mutableStateOf("") }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(top = 60.dp)
+            .padding(top = 120.dp)
     ) {
         Text(text = stringResource(R.string.report_bird_sighting))
 
