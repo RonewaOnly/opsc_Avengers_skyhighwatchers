@@ -106,6 +106,8 @@ class LocationViewModel : ViewModel() {
                     viewModelScope.launch {
                         _location.emit(location)
                     }
+                    currentLocations.LATITUDE = location.latitude
+                    currentLocations.LONGITUDE =  location.longitude
                     Log.d("LOCATION CURRENT USER: ", location.toString())
                 }
             }
