@@ -1,10 +1,11 @@
 package com.example.skyhigh_prototype.Data
 
-import java.util.Locale.LanguageRange
+import androidx.compose.ui.res.stringResource
+import com.example.skyhigh_prototype.R
 
 data class Settings(
-    val notification: Boolean,
-    val distance: String,
-    val languageRange: LanguageRange,
-    val theme: String
+    var notification: Boolean = false,
+    var distance: Boolean = true,
+    var languageRange: String = "en",
+    var theme: Int = R.string.switch_to_light_mode
 )
