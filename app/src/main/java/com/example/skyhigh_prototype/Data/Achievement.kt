@@ -3,7 +3,7 @@ package com.example.skyhigh_prototype.Data
 import com.google.firebase.Timestamp
 
 data class Achievement(
-    val achievementId:String?,
+    val achievementId:String? ="",
     var name:String?,
     var description:String?,
     var  dateAchieved: Timestamp = Timestamp.now()
