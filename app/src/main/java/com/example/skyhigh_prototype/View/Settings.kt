@@ -24,12 +24,15 @@ import androidx.compose.material.Button
 import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.DropdownMenu
 import androidx.compose.material.DropdownMenuItem
+import androidx.compose.material.Surface
+import androidx.compose.material.TextField
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -44,12 +47,14 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import androidx.core.app.NotificationCompat
 import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.skyhigh_prototype.Data.CustomArea
+import com.example.skyhigh_prototype.Data.Reports
 import com.example.skyhigh_prototype.Model.DatabaseHandler
 import com.example.skyhigh_prototype.R
 import com.example.skyhigh_prototype.updateAppLocale
@@ -405,11 +410,21 @@ fun NavigateToCustomAreas(navController: NavController,databaseHandler:DatabaseH
     }
 }
 
-// Function to navigate to Report
 @Composable
-fun navigateToReport(navController: NavController,databaseHandler:DatabaseHandler) {
-    var reports by remember { mutableStateOf(listOf<String>()) }
+fun navigateToReport(navController: NavController, databaseHandler: DatabaseHandler) {
+    var reports by remember { mutableStateOf(listOf<Reports>()) }
     var newReport by remember { mutableStateOf("") }
+    var selectedReport by remember { mutableStateOf<Reports?>(null) } // Hold the selected report for the dialog
+    val context = LocalContext.current
+
+    // Fetching reports on first composition
+    LaunchedEffect(Unit) {
+        databaseHandler.fetchReports(onSuccess = {
+            reports = it
+        }, onFailure = {
+            Log.e("Error from fetching reports", "${it.message}")
+        })
+    }
 
     Column(
         modifier = Modifier
@@ -418,33 +433,118 @@ fun navigateToReport(navController: NavController,databaseHandler:DatabaseHandle
     ) {
         Text(text = stringResource(R.string.report_bird_sighting))
 
-        OutlinedTextField(value = newReport,
+        // Input field for creating a new report
+        OutlinedTextField(
+            value = newReport,
             onValueChange = { newReport = it },
-            label = { Text(stringResource(R.string.enter_bird_details)) })
+            label = { Text(stringResource(R.string.enter_bird_details)) }
+        )
 
-        OutlinedButton(onClick = {
-            if (newReport.isNotBlank()) {
-                reports = reports + newReport
-                newReport = ""
+        // Button to submit a new report
+        OutlinedButton(
+            onClick = {
+                if (newReport.isNotBlank()) {
+                    databaseHandler.createReport(
+                        reportName = newReport,
+                        onSuccess = {
+                            Toast.makeText(context, "Created a report successfully", Toast.LENGTH_SHORT).show()
+                            // Fetch updated reports after creation
+                            databaseHandler.fetchReports(onSuccess = { reports = it }, onFailure = { Log.e("Error", it.message ?: "Unknown error") })
+                        },
+                        onFailure = {
+                            Log.e("Creating a report", "${it.message}")
+                        }
+                    )
+                    newReport = ""
+                }
             }
-        }) {
+        ) {
             Text(text = stringResource(R.string.new_sighting))
         }
 
+        // View past reports
         Text(text = stringResource(R.string.view_past_reports))
 
+        // LazyColumn to display all reports
         LazyColumn {
             items(reports) { report ->
-                Text(text = report)
+                Column {
+                    Text(text = "${report.reportName}")
+                    OutlinedButton(onClick = {
+                        selectedReport = report // Set the selected report to show in the dialog
+                    }) {
+                        Text(text = stringResource(R.string.view_details))
+                    }
+                }
+            }
+        }
+    }
+
+    // If a report is selected, show the dialog
+    selectedReport?.let { report ->
+        viewReport(
+            id = report.reportId ?: "",
+            report = report,
+            onClose = { closeDialog ->
+                if (closeDialog) {
+                    selectedReport = null // Close the dialog by resetting the selected report
+                }
+            },
+            databaseHandler = databaseHandler
+        )
+    }
+}
+
+@Composable
+fun viewReport(id: String, report: Reports, onClose: (Boolean) -> Unit, databaseHandler: DatabaseHandler) {
+    val context = LocalContext.current
+    var reportName by remember { mutableStateOf(report.reportName ?: "") }
+    var reportDescription by remember { mutableStateOf(report.reportDescription ?: "") }
+
+    Dialog(
+        onDismissRequest = { onClose(true) }
+    ) {
+        Surface(
+            modifier = Modifier.padding(16.dp),
+            shape = MaterialTheme.shapes.medium
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                TextField(
+                    value = reportName,
+                    placeholder = { Text("Enter report name") },
+                    onValueChange = { reportName = it }
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                TextField(
+                    value = reportDescription,
+                    placeholder = { Text("Enter report description") },
+                    onValueChange = { reportDescription = it }
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Button to edit and save the report details
                 OutlinedButton(onClick = {
-                    // Code to view report details
+                    // Update report details in the database
+                    databaseHandler.updateReport(
+                        reportId = report.reportId ?: "",
+                        newReportName = reportName,
+                        newReportDescription = reportDescription,
+                        onSuccess = {
+                            Toast.makeText(context, "Report updated", Toast.LENGTH_SHORT).show()
+                            onClose(true) // Close the dialog
+                        },
+                        onFailure = {
+                            Log.e("Updating report", it.message ?: "Unknown error")
+                        }
+                    )
                 }) {
-                    Text(text = stringResource(R.string.view_details))
+                    Text(text = "Edit Report")
                 }
             }
         }
     }
 }
+
 
 // Function to navigate to App Info
 @Composable
@@ -452,12 +552,13 @@ fun navigateToAppInfo(navController: NavController) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(top = 60.dp)
+            .padding(top = 120.dp)
     ) {
         Text(text = "App Version: 1.0.0")
         Text(text = "Developed by: Birdwatching Team")
         Text(text = "License: Open Source")
         Text(text = "Contact: support@birdwatchingapp.com")
     }
-
 }
+
+

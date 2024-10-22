@@ -529,9 +529,9 @@ class DatabaseHandler{
                         // Convert reports array back to a list of Reports objects
                         reports = (document.get("reports") as? List<Map<String, Any?>>)?.map { reportMap ->
                             Reports(
-                                reportId = reportMap["reportId"] as String?, // Assuming the Reports class has this structure
-                                reportDescription  = reportMap["description"] as String?,
-                                reportName = reportMap["reportName"] as String?,
+                                reportId = reportMap["reportId"] as String, // Assuming the Reports class has this structure
+                                reportDescription  = reportMap["reportDescription"] as String,
+                                reportName = reportMap["reportName"] as String,
                                 reportDate = reportMap["reportDate"] as Timestamp
                             )
                         } ?: emptyList(),
@@ -556,7 +556,7 @@ class DatabaseHandler{
                 onFailure(error)
             }
     }
-    fun createReport(reportName: String, reportDescription: String, onSuccess: () -> Unit, onFailure: (Exception) -> Unit) {
+    fun createReport(reportName: String, reportDescription: String="", onSuccess: () -> Unit, onFailure: (Exception) -> Unit) {
         auth = FirebaseAuth.getInstance()
         val userID = auth.currentUser?.uid.toString()
 
@@ -609,6 +609,55 @@ class DatabaseHandler{
                 onFailure(error)
             }
     }
+
+    fun updateReport(reportId: String, newReportName: String, newReportDescription: String, onSuccess: () -> Unit, onFailure: (Exception) -> Unit) {
+        auth = FirebaseAuth.getInstance()
+        val userID = auth.currentUser?.uid.toString()
+
+        // Fetch the user's document
+        db.collection("Users").document(userID).get()
+            .addOnSuccessListener { document ->
+                if (document.exists()) {
+                    // Get the existing reports array
+                    val reportsList = (document.get("reports") as? List<Map<String, Any?>>)?.map { reportMap ->
+                        Reports(
+                            reportId = reportMap["reportId"] as? String ?: "",
+                            reportName = reportMap["reportName"] as? String ?: "",
+                            reportDescription = reportMap["reportDescription"] as? String ?: "",
+                            reportDate = reportMap["reportDate"] as? Timestamp ?: Timestamp.now()
+                        )
+                    } ?: emptyList()
+
+                    // Find the report that matches the reportId
+                    val updatedReportsList = reportsList.map { report ->
+                        if (report.reportId == reportId) {
+                            // Return a new Reports object with the updated data
+                            report.copy(
+                                reportName = newReportName,
+                                reportDescription = newReportDescription
+                            )
+                        } else {
+                            report
+                        }
+                    }
+
+                    // Update the reports array in Firestore
+                    db.collection("Users").document(userID).update("reports", updatedReportsList)
+                        .addOnSuccessListener {
+                            onSuccess()
+                        }
+                        .addOnFailureListener { error ->
+                            onFailure(error)
+                        }
+                } else {
+                    onFailure(Exception("User document does not exist"))
+                }
+            }
+            .addOnFailureListener { error ->
+                onFailure(error)
+            }
+    }
+
 
 
     // Hash password using SHA-256
