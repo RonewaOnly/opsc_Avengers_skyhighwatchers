@@ -511,7 +511,7 @@ fun viewReport(id: String, report: Reports, onClose: (Boolean) -> Unit, database
             Column(modifier = Modifier.padding(16.dp)) {
                 TextField(
                     value = reportName,
-                    placeholder = { Text("Enter report name") },
+                    placeholder = { Text("Enter report name: ") },
                     onValueChange = { reportName = it }
                 )
                 Spacer(modifier = Modifier.height(8.dp))
