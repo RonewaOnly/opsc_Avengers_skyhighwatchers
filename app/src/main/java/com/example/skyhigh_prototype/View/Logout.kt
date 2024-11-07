@@ -4,30 +4,36 @@ package com.example.skyhigh_prototype.View
 
 //noinspection UsingMaterialAndMaterial3Libraries
 
-import android.annotation.SuppressLint
-import android.os.Handler
-import android.util.Log
 //noinspection UsingMaterialAndMaterial3Libraries
+//noinspection UsingMaterialAndMaterial3Libraries
+import android.annotation.SuppressLint
+import android.content.Intent
+import android.os.Handler
+import androidx.activity.result.ActivityResultLauncher
 import androidx.compose.material.AlertDialog
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.navigation.NavController
-import com.example.skyhigh_prototype.MainActivity
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import com.example.skyhigh_prototype.Model.DatabaseHandler
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.firestore.FirebaseFirestore
 
 private var auth = FirebaseAuth.getInstance()
 @SuppressLint("StaticFieldLeak")
 private var firestore = FirebaseFirestore.getInstance()
 
+
 @Composable
-fun Logout(navController: NavController) {
+fun Logout(navController: NavController, auth: FirebaseAuth, firestore: FirebaseFirestore) {
 
     //alert dialog variable
     var showAlertDialog by remember { mutableStateOf(true) }
@@ -45,10 +51,7 @@ fun Logout(navController: NavController) {
                     auth.signOut()
 
                     //to delay intent to login page
-                    @Suppress("DEPRECATION") Handler().postDelayed({
-                        MainActivity()
-                    }, 2000)
-
+                    navController.navigate("sky_high")
 
                     //closes dialog
                     showAlertDialog = false
