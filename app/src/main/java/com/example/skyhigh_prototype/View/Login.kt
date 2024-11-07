@@ -215,7 +215,7 @@ fun Login(
             Box(
                 modifier = Modifier
                     .fillMaxWidth() // Make the Box fill the entire width of the screen
-                    .padding(top = 140.dp) // Add top padding to position the elements as needed
+                    .padding(top = 180.dp) // Add top padding to position the elements as needed
             ) {
 
                 Row(
@@ -271,7 +271,7 @@ fun Login(
 
                 shape = RoundedCornerShape(size = 10.dp),
                 modifier = Modifier
-                    .padding(70.dp, 220.dp, 0.dp, 0.dp)
+                    .padding(70.dp, 250.dp, 0.dp, 0.dp)
                     .width(250.dp)
                     .height(50.dp)
 
@@ -292,7 +292,7 @@ fun Login(
                     text = "or continue with",
                     textAlign = TextAlign.Center,
                     fontSize = 18.sp,
-                    modifier = Modifier.padding(top = 180.dp) // Adjusted padding
+                    modifier = Modifier.padding(top = 250.dp) // Adjusted padding
                 )
 
 
