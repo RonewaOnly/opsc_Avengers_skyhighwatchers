@@ -292,7 +292,7 @@ fun Login(
                     text = "or continue with",
                     textAlign = TextAlign.Center,
                     fontSize = 18.sp,
-                    modifier = Modifier.padding(top = 250.dp) // Adjusted padding
+                    modifier = Modifier.padding(top = 240.dp) // Adjusted padding
                 )
 
 
@@ -313,7 +313,7 @@ fun Login(
                             )
                         },
                         modifier = Modifier
-                            .padding(10.dp, 5.dp)
+                            .padding(10.dp, 8.dp)
                             .width(150.dp),
                         shape = RectangleShape,
                         colors = buttonColors(
@@ -365,7 +365,7 @@ fun Login(
                 }
                 // Column for "Don't have an account?" and "register" button
                 Row(
-                    modifier = Modifier.padding(top = 10.dp),
+                    modifier = Modifier.padding(top = 1.dp),
                     horizontalArrangement = Arrangement.Center, // Center buttons horizontally
                     verticalAlignment = Alignment.CenterVertically
                 ) {
