@@ -5,8 +5,6 @@ package com.example.skyhigh_prototype.View
 
 import android.app.Activity
 import android.content.Intent
-import android.os.Handler
-import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
@@ -27,7 +25,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults.buttonColors
 import androidx.compose.material3.Checkbox
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -53,10 +50,13 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.skyhigh_prototype.Model.DatabaseHandler
 import com.example.skyhigh_prototype.R
-import com.google.firebase.auth.FirebaseAuth
 
 @Composable
-fun Login(navController: NavController, databaseHandle: DatabaseHandler, googleSignInLauncher: ActivityResultLauncher<Intent>) {
+fun Login(
+    navController: NavController,
+    databaseHandle: DatabaseHandler,
+    googleSignInLauncher: ActivityResultLauncher<Intent>
+) {
     val databasehandle = DatabaseHandler()
     //variables
     var username by remember {
@@ -84,7 +84,7 @@ fun Login(navController: NavController, databaseHandle: DatabaseHandler, googleS
         modifier = Modifier
             .fillMaxSize()
             .background(Color.White)
-            .padding( top = 50.dp)
+            .padding(top = 50.dp)
     ) {
 
         //first box contains logo image
@@ -107,7 +107,7 @@ fun Login(navController: NavController, databaseHandle: DatabaseHandler, googleS
             )
         }
 
-        Spacer(modifier = Modifier.height(25.dp))
+        Spacer(modifier = Modifier.height(10.dp))
 
         Text(
             text = "Hi, Welcome Back...",
@@ -115,7 +115,7 @@ fun Login(navController: NavController, databaseHandle: DatabaseHandler, googleS
             fontSize = 18.sp,
             modifier = Modifier.padding(30.dp, 0.dp)
         )
-        Spacer(modifier = Modifier.height(10.dp))
+        Spacer(modifier = Modifier.height(5.dp))
         // box 2
         Box(
             modifier = Modifier
@@ -143,7 +143,7 @@ fun Login(navController: NavController, databaseHandle: DatabaseHandler, googleS
                     isError = emailError.isNotEmpty(),
                     modifier = Modifier
                         .width(400.dp)
-                        .padding(10.dp, 0.dp),
+                        .padding(5.dp, 0.dp),
                     singleLine = true
                 )
                 if (emailError.isNotEmpty()) {
@@ -205,7 +205,7 @@ fun Login(navController: NavController, databaseHandle: DatabaseHandler, googleS
             Box(
                 modifier = Modifier
                     .fillMaxWidth() // Make the Box fill the entire width of the screen
-                    .padding(top = 170.dp) // Add top padding to position the elements as needed
+                    .padding(top = 140.dp) // Add top padding to position the elements as needed
             ) {
 
                 Row(
@@ -232,13 +232,13 @@ fun Login(navController: NavController, databaseHandle: DatabaseHandler, googleS
                 }
             }//End
 
-            Spacer(modifier = Modifier.height(200.dp))
+            Spacer(modifier = Modifier.height(10.dp))
             //button to login
             Button(
                 onClick = {
 
                     //initialising firebase instances
-                   // auth = FirebaseAuth.getInstance()
+                    // auth = FirebaseAuth.getInstance()
 
 
                     // Validate all input fields before proceeding
@@ -247,15 +247,21 @@ fun Login(navController: NavController, databaseHandle: DatabaseHandler, googleS
 
                     //if to check validations passed
                     if (emailError.isEmpty() && passwordError.isEmpty()) {
-                        databasehandle.Login(username,password,context,navController,onSuccess ={}, onError = {
-                            passwordError = it
-                        })
+                        databasehandle.Login(
+                            username,
+                            password,
+                            context,
+                            navController,
+                            onSuccess = {},
+                            onError = {
+                                passwordError = it
+                            })
                     }
                 },
 
                 shape = RoundedCornerShape(size = 10.dp),
                 modifier = Modifier
-                    .padding(70.dp, 250.dp, 0.dp, 0.dp)
+                    .padding(70.dp, 220.dp, 0.dp, 0.dp)
                     .width(250.dp)
                     .height(50.dp)
 
@@ -264,7 +270,7 @@ fun Login(navController: NavController, databaseHandle: DatabaseHandler, googleS
             }
 
 
-            HorizontalDivider(modifier = Modifier.padding(0.dp, 350.dp, 0.dp, 0.dp))
+
 
             Column(
                 modifier = Modifier.align(Alignment.Center),
@@ -276,22 +282,25 @@ fun Login(navController: NavController, databaseHandle: DatabaseHandler, googleS
                     text = "or continue with",
                     textAlign = TextAlign.Center,
                     fontSize = 18.sp,
-                    modifier = Modifier.padding(top = 300.dp) // Adjusted padding
+                    modifier = Modifier.padding(top = 180.dp) // Adjusted padding
                 )
 
-                Spacer(modifier = Modifier.height(20.dp))
+
                 //row for social media buttons
                 Row(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 20.dp), // Optional padding to center the buttons within the column
+                        .fillMaxWidth(), // Optional padding to center the buttons within the column
                     horizontalArrangement = Arrangement.Center, // Center buttons horizontally
                     verticalAlignment = Alignment.CenterVertically
                 ) {
 
                     // Google account button
                     Button(
-                        onClick = { databaseHandle.signInWithGoogle(context as Activity, googleSignInLauncher)
+                        onClick = {
+                            databaseHandle.signInWithGoogle(
+                                context as Activity,
+                                googleSignInLauncher
+                            )
                         },
                         modifier = Modifier
                             .padding(10.dp, 5.dp)
@@ -315,6 +324,7 @@ fun Login(navController: NavController, databaseHandle: DatabaseHandler, googleS
                     }
 
                     // Facebook account button
+                    //keytool -exportcert -alias androiddebugkey -keystore "C:\Users\USERNAME\.android\debug.keystore" | "PATH_TO_OPENSSL_LIBR
                     Button(
                         onClick = { /*TODO*/ },
                         modifier = Modifier
@@ -341,7 +351,7 @@ fun Login(navController: NavController, databaseHandle: DatabaseHandler, googleS
                 }
                 // Column for "Don't have an account?" and "register" button
                 Row(
-                    modifier = Modifier.padding(top = 30.dp),
+                    modifier = Modifier.padding(top = 10.dp),
                     horizontalArrangement = Arrangement.Center, // Center buttons horizontally
                     verticalAlignment = Alignment.CenterVertically
                 ) {

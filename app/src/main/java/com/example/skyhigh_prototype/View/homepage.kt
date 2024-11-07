@@ -86,6 +86,8 @@ import com.example.skyhigh_prototype.Model.MapboxViewModel
 import com.example.skyhigh_prototype.Model.currentLocations
 import com.example.skyhigh_prototype.R
 import com.example.skyhigh_prototype.R.color.dark_blue
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -181,7 +183,7 @@ fun Main(
                     MapOption(rememberNavController, ebirdViewModel)
                 }
                 composable("logout") {
-                    Logout(rememberNavController)
+                    Logout(rememberNavController, FirebaseAuth.getInstance(), FirebaseFirestore.getInstance())
                 }
             }
             Spacer(modifier = Modifier.padding(contentPadding))

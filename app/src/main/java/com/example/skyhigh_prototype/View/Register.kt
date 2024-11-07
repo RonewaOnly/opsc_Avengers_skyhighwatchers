@@ -1,4 +1,4 @@
-@file:Suppress("PackageName")
+@file:Suppress("PackageName", "ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE")
 
 package com.example.skyhigh_prototype.View
 
@@ -62,7 +62,7 @@ fun Register(navController: NavController) {
     var confirmPasswordError by remember { mutableStateOf("") }
 
     //firebase instances
-    var auth : FirebaseAuth
+    var auth: FirebaseAuth
     var firestore: FirebaseFirestore
 
     //DatabaseHandler in register screen
@@ -275,7 +275,8 @@ fun Register(navController: NavController) {
                         lastnameError = ValidateForms.validateLastName(lastname)
                         emailError = ValidateForms.validateEmail(email)
                         passwordError = ValidateForms.validatePassword(password)
-                        confirmPasswordError = ValidateForms.validateConfirmPassword(password, confirmPassword)
+                        confirmPasswordError =
+                            ValidateForms.validateConfirmPassword(password, confirmPassword)
                         //initialising firebase instances
                         auth = FirebaseAuth.getInstance()
                         firestore = FirebaseFirestore.getInstance()
@@ -283,7 +284,14 @@ fun Register(navController: NavController) {
                         // If all validations pass, navigate to the login screen
                         // If no errors, proceed with registration
                         if (firstnameError.isEmpty() && lastnameError.isEmpty() && emailError.isEmpty() && passwordError.isEmpty() && confirmPasswordError.isEmpty()) {
-                                dbClass.register(firstname, lastname, email, password, navController, context)
+                            dbClass.register(
+                                firstname,
+                                lastname,
+                                email,
+                                password,
+                                navController,
+                                context
+                            )
 //                            //using firebase auth to create a user with authentication
 //                            auth.createUserWithEmailAndPassword(email, password).addOnSuccessListener {
 //
