@@ -79,7 +79,6 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.skyhigh_prototype.Data.Birds
-import com.example.skyhigh_prototype.Data.Location
 import com.example.skyhigh_prototype.Model.BirdViewModel
 import com.example.skyhigh_prototype.Model.DatabaseHandler
 import com.example.skyhigh_prototype.Model.MapboxViewModel
@@ -133,7 +132,9 @@ fun Main(
                             Icons.Filled.Menu,
                             contentDescription = "Menu",
                             tint = Color.Black,
-                            modifier = Modifier.size(100.dp).padding(0.dp, 50.dp, 50.dp, 0.dp)
+                            modifier = Modifier
+                                .size(100.dp)
+                                .padding(0.dp, 50.dp, 50.dp, 0.dp)
                         )
                     },
                     onClick = {
@@ -171,10 +172,10 @@ fun Main(
                     Homepage(ebirdViewModel)
                 }
                 composable("settings") {
-                    NavOption(isDarkTheme, onThemeChange,databaseHandler)
+                    NavOption(isDarkTheme, onThemeChange, databaseHandler)
                 }
                 composable("profile") {
-                    Profile(rememberNavController,databaseHandler)
+                    Profile(rememberNavController, databaseHandler)
                 }
                 composable("collection") {
                     PersonalCollection()
@@ -183,7 +184,11 @@ fun Main(
                     MapOption(rememberNavController, ebirdViewModel)
                 }
                 composable("logout") {
-                    Logout(rememberNavController, FirebaseAuth.getInstance(), FirebaseFirestore.getInstance())
+                    Logout(
+                        rememberNavController,
+                        FirebaseAuth.getInstance(),
+                        FirebaseFirestore.getInstance()
+                    )
                 }
             }
             Spacer(modifier = Modifier.padding(contentPadding))
@@ -214,7 +219,8 @@ fun NavDrawer(navController: NavController, drawerState: DrawerState, scope: Cor
 
             Image(
                 painter = painterResource(id = R.drawable.sky_high_watchers_logo),
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
                     .padding(top = 20.dp),
                 contentDescription = null,
                 contentScale = ContentScale.FillWidth,
@@ -390,7 +396,8 @@ fun Homepage(ebirdViewModel: BirdViewModel) {
     val tabs = listOf("Personal Cards", "Recent Observation", "Tab 3")
     Scaffold { paddingValues ->
         Column(
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier
+                .fillMaxSize()
                 .padding(top = 50.dp)
         ) {
             Column(
@@ -603,7 +610,7 @@ fun TabContent2(viewModel: BirdViewModel, lat: Double, lng: Double, apiKey: Stri
         }
     }
 
-    Log.d("location for recent observation: ","LAT: $lat, LONG: $lng")
+    Log.d("location for recent observation: ", "LAT: $lat, LONG: $lng")
 }
 
 @Composable
