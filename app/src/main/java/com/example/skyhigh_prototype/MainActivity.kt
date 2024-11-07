@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
 import android.os.Bundle
+import android.os.Handler
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -48,6 +49,7 @@ import com.example.skyhigh_prototype.Model.DatabaseHandler
 import com.example.skyhigh_prototype.Model.LocationViewModel
 import com.example.skyhigh_prototype.Model.MapboxViewModel
 import com.example.skyhigh_prototype.View.ForgotPassword
+import com.example.skyhigh_prototype.View.Homepage
 import com.example.skyhigh_prototype.View.Login
 import com.example.skyhigh_prototype.View.Main
 import com.example.skyhigh_prototype.View.Register
@@ -84,7 +86,6 @@ class MainActivity : ComponentActivity() {
     private lateinit var firestore: FirebaseFirestore
     private lateinit var callbackManager: CallbackManager
 
-
     // Initialize FusedLocationProviderClient
     private lateinit var fusedLocationProviderClient: FusedLocationProviderClient
 
@@ -97,8 +98,23 @@ class MainActivity : ComponentActivity() {
         auth = FirebaseAuth.getInstance()
         firestore = FirebaseFirestore.getInstance()
 
-        // Initialize Facebook CallbackManager
-        callbackManager = CallbackManager.Factory.create()
+
+        // Check if user is already logged in
+        if (auth.currentUser != null) {
+            //handler to delay intent
+            @Suppress("DEPRECATION")
+            Handler().postDelayed({
+                //navigating to home page
+                //val navController = null
+                //navController.navigate("homepage")
+            }, 2000)
+        }else{
+
+            // Initialize Facebook CallbackManager
+            callbackManager = CallbackManager.Factory.create()
+        }
+
+
 
         val googleSignInLauncher =
             registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
@@ -147,7 +163,7 @@ class MainActivity : ComponentActivity() {
     }
 
     // Handle Facebook AccessToken
-    private fun handleFacebookAccessToken(token: AccessToken) {
+    private fun handleFacebookAccessToken(token: AccessToken, navController: NavController) {
         val credential: AuthCredential = FacebookAuthProvider.getCredential(token.token)
 
         auth.signInWithCredential(credential)
@@ -156,7 +172,7 @@ class MainActivity : ComponentActivity() {
                     // Successful Firebase login with Facebook
                     val user = auth.currentUser
                     user?.let {
-                        checkAndStoreUserInFirestore(it.uid, it.displayName, it.email)
+                        checkAndStoreUserInFirestore(it.uid, it.displayName, it.email, navController)
                     }
                 } else {
                     Log.w("FacebookLogin", "signInWithCredential:failure", task.exception)
@@ -165,7 +181,7 @@ class MainActivity : ComponentActivity() {
     }
 
     // Check and Store User in Firestore
-    private fun checkAndStoreUserInFirestore(userId: String, name: String?, email: String?) {
+    private fun checkAndStoreUserInFirestore(userId: String, name: String?, email: String?, navController: NavController) {
         val userRef = firestore.collection("Users").document(userId)
 
         userRef.get().addOnSuccessListener { document ->
@@ -176,6 +192,12 @@ class MainActivity : ComponentActivity() {
                 userRef.set(userData)
                     .addOnSuccessListener {
                         Log.d("Firestore", "User added to Firestore")
+                        //handler to delay intent
+                        @Suppress("DEPRECATION")
+                        Handler().postDelayed({
+                            //navigating to home page
+                            navController.navigate("homepage")
+                        }, 2000)
                     }
                     .addOnFailureListener { e ->
                         Log.w("Firestore", "Error adding user", e)
@@ -189,13 +211,14 @@ class MainActivity : ComponentActivity() {
     }
 
 
+
     // face login function
-    fun performFacebookLogin() {
+    fun performFacebookLogin(navController: NavController) {
         LoginManager.getInstance().logInWithReadPermissions(this, listOf("email", "public_profile"))
         LoginManager.getInstance().registerCallback(callbackManager, object :
             FacebookCallback<LoginResult> {
             override fun onSuccess(result: LoginResult) {
-                handleFacebookAccessToken(result.accessToken)
+                handleFacebookAccessToken(result.accessToken, navController)
             }
 
             override fun onCancel() {

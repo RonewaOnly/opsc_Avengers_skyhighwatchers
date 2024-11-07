@@ -339,7 +339,7 @@ fun Login(
                         onClick = {
 
                             //calling function to login with facebook
-                            context.performFacebookLogin()
+                            context.performFacebookLogin(navController)
                         },
                         modifier = Modifier
                             .padding(10.dp, 5.dp)
