@@ -2,6 +2,7 @@ package com.example.skyhigh_prototype.Data
 
 data class UserDetails(
     var firstname: String? = "",
+    var username : String?  = "",
     var lastname: String? = "",
     var email: String? ="",
     val bio: String? ="",

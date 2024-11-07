@@ -45,6 +45,8 @@ import com.google.firebase.Timestamp
 @Composable
 fun Profile(navController: NavController, databaseHandler: DatabaseHandler){
     val context = LocalContext.current
+
+
     Text(text = "Profile")
     //Testing data
     val userProfile = UserProfile(
@@ -96,7 +98,18 @@ fun Profile(navController: NavController, databaseHandler: DatabaseHandler){
     UserProfileScreen(
         userProfile = userView,
         onEditCustomArea = {},
-        onDeleteCustomArea = {},
+       // onDeleteCustomArea = {databaseHandler.deleteCustomArea()},
+        onDeleteCustomArea = {
+            databaseHandler.deleteCustomArea(
+                areaId = "",
+                onSuccess = {
+                    println("Custom area deleted successfully.")
+                },
+                onFailure = { error ->
+                    println("Failed to delete custom area: ${error.message}")
+                }
+            )
+        },
         onAddCustomArea = { },
         onSettingsClick = {  navController.navigate("settings") },
         onLogoutClick = { navController.navigate("logout")}
@@ -179,7 +192,9 @@ fun UserProfileScreen(
 
 @Composable
 fun ProfileHeader(userProfile: UserDetails) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally) {
         Image(
             painter = rememberImagePainter(userProfile.profilePic),
             contentDescription = "Profile Picture",
@@ -189,10 +204,9 @@ fun ProfileHeader(userProfile: UserDetails) {
                 .background(Color.Gray)
         )
         Spacer(modifier = Modifier.height(8.dp))
-        //Text(text = userProfile.username, fontSize = 24.sp, fontWeight = FontWeight.Bold)
-        Text(text = "${userProfile.location}", fontSize = 16.sp, color = Color.Gray)
+        Text(text = userProfile.firstname?: "Name ", fontSize = 24.sp, fontWeight = FontWeight.Bold)
+        Text(text = userProfile.lastname?: "Last Name ", fontSize = 24.sp, fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(8.dp))
-        Text(text = "${userProfile.bio}", fontSize = 14.sp, textAlign = TextAlign.Center)
     }
 }
 
@@ -226,9 +240,7 @@ fun CustomAreasSection(
             modifier = Modifier.fillMaxWidth()
         ) {
             Text(text = "Custom Bird-Watching Areas", fontSize = 18.sp, fontWeight = FontWeight.Bold)
-            OutlinedButton(onClick = onAdd) {
-                Text(text = "Add")
-            }
+
         }
         customAreas.forEach { area ->
             Card(
