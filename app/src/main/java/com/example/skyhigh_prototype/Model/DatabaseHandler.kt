@@ -6,7 +6,6 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Handler
 import android.util.Log
-import com.google.firebase.Timestamp
 import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
 import androidx.navigation.NavController
@@ -23,6 +22,7 @@ import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
+import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.firestore.FieldValue
@@ -31,7 +31,7 @@ import com.google.firebase.storage.FirebaseStorage
 import java.security.MessageDigest
 import java.util.UUID
 
-class DatabaseHandler{
+class DatabaseHandler {
     val db = FirebaseFirestore.getInstance()
     private val storage = FirebaseStorage.getInstance()
     private var auth: FirebaseAuth = FirebaseAuth.getInstance()
@@ -69,7 +69,11 @@ class DatabaseHandler{
         }
     }
 
-    private fun firebaseAuthWithGoogle(idToken: String, onSuccess: () -> Unit, onError: (String) -> Unit) {
+    private fun firebaseAuthWithGoogle(
+        idToken: String,
+        onSuccess: () -> Unit,
+        onError: (String) -> Unit
+    ) {
         val credential = GoogleAuthProvider.getCredential(idToken, null)
         auth.signInWithCredential(credential)
             .addOnCompleteListener { task ->
@@ -80,13 +84,25 @@ class DatabaseHandler{
                 }
             }
     }
-    fun Login(email: String,password: String,context: Context, navController: NavController ,onSuccess: () -> Unit,onError: (String) -> Unit){
+
+    fun Login(
+        email: String,
+        password: String,
+        context: Context,
+        navController: NavController,
+        onSuccess: () -> Unit,
+        onError: (String) -> Unit
+    ) {
 
         //using firebase auth method to sign in a user
         auth.signInWithEmailAndPassword(email, password).addOnSuccessListener {
 
             //to alert user
-            Toast.makeText(context, "Successful Login you will be shortly redirected to your dashboard", Toast.LENGTH_LONG).show()
+            Toast.makeText(
+                context,
+                "Successful Login you will be shortly redirected to your dashboard",
+                Toast.LENGTH_LONG
+            ).show()
             //handler to delay intent
             @Suppress("DEPRECATION")
             Handler().postDelayed({
@@ -99,7 +115,14 @@ class DatabaseHandler{
         }
     }
 
-    fun register(firstname:String, lastname:String, email: String, password: String, navController: NavController, context:Context){
+    fun register(
+        firstname: String,
+        lastname: String,
+        email: String,
+        password: String,
+        navController: NavController,
+        context: Context
+    ) {
 //using firebase auth to create a user with authentication
         auth.createUserWithEmailAndPassword(email, password).addOnSuccessListener {
 
@@ -115,17 +138,25 @@ class DatabaseHandler{
 //            )
 
             //val hashed = hashPassword(password)
-            val user = UserDetails(firstname,lastname,email);
+            val user = UserDetails(firstname, lastname, email)
             //creating user with id
-            if(userID != null){
+            if (userID != null) {
                 //adding user to collection
                 db.collection("Users").document(userID).set(user).addOnFailureListener {
                     //to alert user
-                    Toast.makeText(context,"Unable to save user details to database", Toast.LENGTH_LONG).show()
+                    Toast.makeText(
+                        context,
+                        "Unable to save user details to database",
+                        Toast.LENGTH_LONG
+                    ).show()
                 }
             }
             //alert user
-            Toast.makeText(context,"Successful Account Creation\nYou will be redirected to Login Page", Toast.LENGTH_LONG).show()
+            Toast.makeText(
+                context,
+                "Successful Account Creation\nYou will be redirected to Login Page",
+                Toast.LENGTH_LONG
+            ).show()
 
             //to delay intent
             @Suppress("DEPRECATION")
@@ -140,24 +171,36 @@ class DatabaseHandler{
         }.addOnFailureListener {
 
             //to alert user
-            Toast.makeText(context,"Email already exit", Toast.LENGTH_LONG).show()
+            Toast.makeText(context, "Email already exit", Toast.LENGTH_LONG).show()
 
         }
     }
-    fun createCollection(birdTip: BirdTip,context: Context){
+
+    fun createCollection(birdTip: BirdTip, context: Context) {
         auth = FirebaseAuth.getInstance()
         val userID = auth.currentUser?.uid.toString()
-        birdTip.card_id = db.collection("Bird Collection").document().id//will be generating for the Cards collection for the specific breeds or group of birds the user will be looking for.
+        birdTip.card_id = db.collection("Bird Collection")
+            .document().id//will be generating for the Cards collection for the specific breeds or group of birds the user will be looking for.
         db.collection("Users").document(userID).collection("Bird Collection")
             .add(birdTip)
             .addOnSuccessListener {
                 Toast.makeText(context, "Collection saved successfully!", Toast.LENGTH_SHORT).show()
             }
             .addOnFailureListener {
-                Toast.makeText(context, "Error saving collection: ${it.message}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    context,
+                    "Error saving collection: ${it.message}",
+                    Toast.LENGTH_SHORT
+                ).show()
             }
     }
-    fun addObservation(card_id: String, newObservation: Birds, context: Context, onSave: () -> Unit) {
+
+    fun addObservation(
+        card_id: String,
+        newObservation: Birds,
+        context: Context,
+        onSave: () -> Unit
+    ) {
         auth = FirebaseAuth.getInstance()
         val userID = auth.currentUser?.uid
 
@@ -166,18 +209,27 @@ class DatabaseHandler{
             // Use arrayUnion to add new observation to the 'content' array
             db.collection("Users").document(userID).collection("Bird Collection")
                 .document(card_id)
-                .update("content", FieldValue.arrayUnion(newObservation))  // Appends the new observation
+                .update(
+                    "content",
+                    FieldValue.arrayUnion(newObservation)
+                )  // Appends the new observation
                 .addOnSuccessListener {
-                    Toast.makeText(context, "Observation added successfully!", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, "Observation added successfully!", Toast.LENGTH_SHORT)
+                        .show()
                     onSave()  // Callback to refresh or close after save
                 }
                 .addOnFailureListener { e ->
-                    Toast.makeText(context, "Failed to add observation: ${e.message}", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        context,
+                        "Failed to add observation: ${e.message}",
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
         } else {
             Toast.makeText(context, "User not authenticated", Toast.LENGTH_SHORT).show()
         }
     }
+
     // Function to update bird observation with image and video
     fun updateCardWithObservation(
         cardId: String,
@@ -195,7 +247,7 @@ class DatabaseHandler{
                 .addOnSuccessListener {
                     imageRef.downloadUrl.addOnSuccessListener { imageUrl ->
                         bird.images = listOf(imageUrl.toString()) // Update bird with image URL
-                        uploadObservation(cardId, bird,context ,onSuccess, onFailure)
+                        uploadObservation(cardId, bird, context, onSuccess, onFailure)
                     }
                 }
                 .addOnFailureListener { exception ->
@@ -210,7 +262,7 @@ class DatabaseHandler{
                 .addOnSuccessListener {
                     videoRef.downloadUrl.addOnSuccessListener { videoUrl ->
                         bird.videos = listOf(videoUrl.toString()) // Update bird with video URL
-                        uploadObservation(cardId, bird,context ,onSuccess, onFailure)
+                        uploadObservation(cardId, bird, context, onSuccess, onFailure)
                     }
                 }
                 .addOnFailureListener { exception ->
@@ -220,7 +272,7 @@ class DatabaseHandler{
 
         // If no image or video, directly upload the bird observation
         if (imageUri == null && videoUri == null) {
-            uploadObservation(cardId, bird,context ,onSuccess, onFailure)
+            uploadObservation(cardId, bird, context, onSuccess, onFailure)
         }
     }
 
@@ -235,14 +287,20 @@ class DatabaseHandler{
         db.collection("Bird Collection").document(cardId)
             .update("content", FieldValue.arrayUnion(bird))
             .addOnSuccessListener {
-                Toast.makeText(context, "Observation added successfully!", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "Observation added successfully!", Toast.LENGTH_SHORT)
+                    .show()
                 onSuccess() // Trigger callback
             }
             .addOnFailureListener { exception ->
-                Toast.makeText(context, "Failed to add observation: ${exception.message}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    context,
+                    "Failed to add observation: ${exception.message}",
+                    Toast.LENGTH_SHORT
+                ).show()
                 onFailure(exception) // Trigger error callback
             }
     }
+
     //this function will be used for the personalCollection page only has on that will be fetching and displaying the current cards created.
     fun fetchCards(onSuccess: (List<BirdTip>) -> Unit, onError: (String) -> Unit) {
         auth = FirebaseAuth.getInstance()
@@ -286,7 +344,8 @@ class DatabaseHandler{
                             // Create a Birds object from each map entry in the content list
                             val bird = Birds(
                                 bird_name = birdData["bird_name"] as? String ?: "",
-                                bird_species = birdData["bird_species"] as? List<String> ?: emptyList(),
+                                bird_species = birdData["bird_species"] as? List<String>
+                                    ?: emptyList(),
                                 gender = birdData["gender"] as? String ?: "",
                                 color = birdData["color"] as? List<String> ?: emptyList(),
                                 location = birdData["location"] as? String ?: "",
@@ -299,7 +358,8 @@ class DatabaseHandler{
                                         feed_grown = feedData["feed_grown"] as? String ?: ""
                                     )
                                 } ?: emptyList(),
-                                bird_description = birdData["bird_description"] as? List<String> ?: emptyList(),
+                                bird_description = birdData["bird_description"] as? List<String>
+                                    ?: emptyList(),
                                 relatedSpecies = emptyList(), // You can add handling for relatedSpecies if needed
                                 hotspots = emptyList() // Add handling for hotspots if needed
                             )
@@ -339,18 +399,30 @@ class DatabaseHandler{
     }
 
     // Function to delete an observation from a card
-    fun deleteObservation(cardId: String, bird: Birds,context: Context, onSuccess: () -> Unit, onFailure: (Exception) -> Unit) {
+    fun deleteObservation(
+        cardId: String,
+        bird: Birds,
+        context: Context,
+        onSuccess: () -> Unit,
+        onFailure: (Exception) -> Unit
+    ) {
         db.collection("Bird Collection").document(cardId)
             .update("content", FieldValue.arrayRemove(bird))
             .addOnSuccessListener {
-                Toast.makeText(context, "Observation deleted successfully!", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "Observation deleted successfully!", Toast.LENGTH_SHORT)
+                    .show()
                 onSuccess() // Trigger callback on success
             }
             .addOnFailureListener { exception ->
-                Toast.makeText(context, "Failed to delete observation: ${exception.message}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    context,
+                    "Failed to delete observation: ${exception.message}",
+                    Toast.LENGTH_SHORT
+                ).show()
                 onFailure(exception) // Trigger error callback
             }
     }
+
     //updating the setting
     fun updateSettings(
         notification: Boolean = false,
@@ -381,13 +453,15 @@ class DatabaseHandler{
                 onFailure(error)
             }
     }
+
     fun createCustomArea(areaName: String, onSuccess: () -> Unit, onFailure: (Exception) -> Unit) {
         auth = FirebaseAuth.getInstance()
         val userID = auth.currentUser?.uid.toString()
 
         // Create a new custom area with a unique areaId
         val newArea = CustomArea(
-            areaId = db.collection("Users").document(userID).collection("CustomAreas").document().id,
+            areaId = db.collection("Users").document(userID).collection("CustomAreas")
+                .document().id,
             name = areaName
         )
         // Add the new area to the customArea array using FieldValue.arrayUnion
@@ -402,7 +476,14 @@ class DatabaseHandler{
     }
 
 
-    fun updateCustomArea(areaId: String, name: String, locationDesc: String, sightings: Int, onSuccess: () -> Unit, onFailure: (Exception) -> Unit) {
+    fun updateCustomArea(
+        areaId: String,
+        name: String,
+        locationDesc: String,
+        sightings: Int,
+        onSuccess: () -> Unit,
+        onFailure: (Exception) -> Unit
+    ) {
         auth = FirebaseAuth.getInstance()
         val userID = auth.currentUser?.uid.toString()
 
@@ -425,7 +506,8 @@ class DatabaseHandler{
                                 areaId = areaMap["areaId"] as String?,
                                 name = areaMap["name"] as String?,
                                 locationDescription = areaMap["locationDescription"] as String?,
-                                sightingsInArea = (areaMap["sightingsInArea"] as? Long)?.toInt() ?: 0
+                                sightingsInArea = (areaMap["sightingsInArea"] as? Long)?.toInt()
+                                    ?: 0
                             )
                         }
                     }
@@ -466,7 +548,8 @@ class DatabaseHandler{
                                 areaId = areaMap["areaId"] as String?,
                                 name = areaMap["name"] as String?,
                                 locationDescription = areaMap["locationDescription"] as String?,
-                                sightingsInArea = (areaMap["sightingsInArea"] as? Long)?.toInt() ?: 0
+                                sightingsInArea = (areaMap["sightingsInArea"] as? Long)?.toInt()
+                                    ?: 0
                             )
                         }
                         // Pass the list of CustomArea objects to the success callback
@@ -482,6 +565,7 @@ class DatabaseHandler{
                 onFailure(error)
             }
     }
+
     fun fetchUserDetails(onSuccess: (UserDetails) -> Unit, onFailure: (Exception) -> Unit) {
         auth = FirebaseAuth.getInstance()
         val userID = auth.currentUser?.uid.toString()
@@ -503,11 +587,14 @@ class DatabaseHandler{
                         settings = listOf(
                             document.get("settings")?.let { settingsMap ->
                                 if (settingsMap is Map<*, *>) {
-                                        Settings(
-                                        notification = settingsMap["notification"] as? Boolean ?: false,
+                                    Settings(
+                                        notification = settingsMap["notification"] as? Boolean
+                                            ?: false,
                                         distance = settingsMap["distance"] as? Boolean ?: true,
-                                        languageRange = settingsMap["languageRange"] as? String ?: "en",
-                                        theme = settingsMap["theme"] as? Int ?: R.string.switch_to_light_mode
+                                        languageRange = settingsMap["languageRange"] as? String
+                                            ?: "en",
+                                        theme = settingsMap["theme"] as? Int
+                                            ?: R.string.switch_to_light_mode
                                     )
                                 } else null
                             }
@@ -519,18 +606,20 @@ class DatabaseHandler{
                                 areaId = areaMap["areaId"] as String?,
                                 name = areaMap["name"] as String?,
                                 locationDescription = areaMap["locationDescription"] as String?,
-                                sightingsInArea = (areaMap["sightingsInArea"] as? Long)?.toInt() ?: 0
+                                sightingsInArea = (areaMap["sightingsInArea"] as? Long)?.toInt()
+                                    ?: 0
                             )
                         } ?: emptyList(),
                         sightingsCount = 0.0,
                         // Convert favoriteBirds array back to a list of strings
-                        favoriteBirds = document.get("favoriteBirds") as? List<String> ?: emptyList(),
+                        favoriteBirds = document.get("favoriteBirds") as? List<String>
+                            ?: emptyList(),
 
                         // Convert reports array back to a list of Reports objects
                         reports = (document.get("reports") as? List<Map<String, Any?>>)?.map { reportMap ->
                             Reports(
                                 reportId = reportMap["reportId"] as String, // Assuming the Reports class has this structure
-                                reportDescription  = reportMap["reportDescription"] as String,
+                                reportDescription = reportMap["reportDescription"] as String,
                                 reportName = reportMap["reportName"] as String,
                                 reportDate = reportMap["reportDate"] as Timestamp
                             )
@@ -556,7 +645,13 @@ class DatabaseHandler{
                 onFailure(error)
             }
     }
-    fun createReport(reportName: String, reportDescription: String="", onSuccess: () -> Unit, onFailure: (Exception) -> Unit) {
+
+    fun createReport(
+        reportName: String,
+        reportDescription: String = "",
+        onSuccess: () -> Unit,
+        onFailure: (Exception) -> Unit
+    ) {
         auth = FirebaseAuth.getInstance()
         val userID = auth.currentUser?.uid.toString()
 
@@ -580,6 +675,7 @@ class DatabaseHandler{
                 onFailure(error)
             }
     }
+
     fun fetchReports(onSuccess: (List<Reports>) -> Unit, onFailure: (Exception) -> Unit) {
         auth = FirebaseAuth.getInstance()
         val userID = auth.currentUser?.uid.toString()
@@ -589,14 +685,16 @@ class DatabaseHandler{
             .addOnSuccessListener { document ->
                 if (document.exists()) {
                     // Extract the reports array and map it to a list of Reports objects
-                    val reportsList = (document.get("reports") as? List<Map<String, Any?>>)?.map { reportMap ->
-                        Reports(
-                            reportId = reportMap["reportId"] as? String ?: "",
-                            reportName = reportMap["reportName"] as? String ?: "",
-                            reportDescription = reportMap["reportDescription"] as? String ?: "",
-                            reportDate = reportMap["reportDate"] as? Timestamp ?: Timestamp.now()
-                        )
-                    } ?: emptyList()
+                    val reportsList =
+                        (document.get("reports") as? List<Map<String, Any?>>)?.map { reportMap ->
+                            Reports(
+                                reportId = reportMap["reportId"] as? String ?: "",
+                                reportName = reportMap["reportName"] as? String ?: "",
+                                reportDescription = reportMap["reportDescription"] as? String ?: "",
+                                reportDate = reportMap["reportDate"] as? Timestamp
+                                    ?: Timestamp.now()
+                            )
+                        } ?: emptyList()
 
                     // Return the list of reports to the success callback
                     onSuccess(reportsList)
@@ -610,7 +708,13 @@ class DatabaseHandler{
             }
     }
 
-    fun updateReport(reportId: String, newReportName: String, newReportDescription: String, onSuccess: () -> Unit, onFailure: (Exception) -> Unit) {
+    fun updateReport(
+        reportId: String,
+        newReportName: String,
+        newReportDescription: String,
+        onSuccess: () -> Unit,
+        onFailure: (Exception) -> Unit
+    ) {
         auth = FirebaseAuth.getInstance()
         val userID = auth.currentUser?.uid.toString()
 
@@ -619,14 +723,16 @@ class DatabaseHandler{
             .addOnSuccessListener { document ->
                 if (document.exists()) {
                     // Get the existing reports array
-                    val reportsList = (document.get("reports") as? List<Map<String, Any?>>)?.map { reportMap ->
-                        Reports(
-                            reportId = reportMap["reportId"] as? String ?: "",
-                            reportName = reportMap["reportName"] as? String ?: "",
-                            reportDescription = reportMap["reportDescription"] as? String ?: "",
-                            reportDate = reportMap["reportDate"] as? Timestamp ?: Timestamp.now()
-                        )
-                    } ?: emptyList()
+                    val reportsList =
+                        (document.get("reports") as? List<Map<String, Any?>>)?.map { reportMap ->
+                            Reports(
+                                reportId = reportMap["reportId"] as? String ?: "",
+                                reportName = reportMap["reportName"] as? String ?: "",
+                                reportDescription = reportMap["reportDescription"] as? String ?: "",
+                                reportDate = reportMap["reportDate"] as? Timestamp
+                                    ?: Timestamp.now()
+                            )
+                        } ?: emptyList()
 
                     // Find the report that matches the reportId
                     val updatedReportsList = reportsList.map { report ->
@@ -657,7 +763,6 @@ class DatabaseHandler{
                 onFailure(error)
             }
     }
-
 
 
     // Hash password using SHA-256

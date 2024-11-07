@@ -48,9 +48,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.example.skyhigh_prototype.MainActivity
 import com.example.skyhigh_prototype.Model.DatabaseHandler
 import com.example.skyhigh_prototype.R
+import com.google.firebase.auth.FirebaseAuth
 
+private lateinit var auth: FirebaseAuth
+//private lateinit var callbackManager: CallbackManager
 @Composable
 fun Login(
     navController: NavController,
@@ -58,6 +62,11 @@ fun Login(
     googleSignInLauncher: ActivityResultLauncher<Intent>
 ) {
     val databasehandle = DatabaseHandler()
+    // Initialize Firebase Auth
+    auth = FirebaseAuth.getInstance()
+
+    // Initialize Facebook CallbackManager
+    //callbackManager = CallbackManager.Factory.create()
     //variables
     var username by remember {
         mutableStateOf("")
@@ -75,9 +84,10 @@ fun Login(
     //Error states
     var emailError by remember { mutableStateOf("") }
     var passwordError by remember { mutableStateOf("") }
+    val context = LocalContext.current as MainActivity
 
-    //firebase instances
-    //var auth : FirebaseAuth
+
+
 
     //column for page
     Column(
@@ -199,7 +209,7 @@ fun Login(
             }//end of column
 
             //val context for toast message
-            val context = LocalContext.current
+
 
             //box for remember me and forgot password
             Box(
@@ -326,7 +336,11 @@ fun Login(
                     // Facebook account button
                     //keytool -exportcert -alias androiddebugkey -keystore "C:\Users\USERNAME\.android\debug.keystore" | "PATH_TO_OPENSSL_LIBR
                     Button(
-                        onClick = { /*TODO*/ },
+                        onClick = {
+
+                            //calling function to login with facebook
+                            context.performFacebookLogin()
+                        },
                         modifier = Modifier
                             .padding(10.dp, 5.dp)
                             .width(150.dp),
