@@ -291,7 +291,12 @@ fun Login(navController: NavController, databaseHandle: DatabaseHandler, googleS
 
                     // Google account button
                     Button(
-                        onClick = { databaseHandle.signInWithGoogle(context as Activity, googleSignInLauncher)
+                        onClick = { databaseHandle.signInWithGoogle(context as Activity, googleSignInLauncher,onSuccess = {
+                            navController.navigate("homepage") // Navigate to homepage on success
+                        }, onError = { errorMessage ->
+                                // Handle error if needed, e.g., show a Toast
+                                Toast.makeText(context, "Error: $errorMessage", Toast.LENGTH_SHORT).show()
+                            })
                         },
                         modifier = Modifier
                             .padding(10.dp, 5.dp)
