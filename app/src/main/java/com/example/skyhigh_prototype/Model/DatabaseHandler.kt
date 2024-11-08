@@ -530,6 +530,40 @@ class DatabaseHandler {
             }
     }
 
+//
+fun deleteCustomArea(areaId: String, onSuccess: () -> Unit, onFailure: (Exception) -> Unit) {
+    auth = FirebaseAuth.getInstance()
+    val userID = auth.currentUser?.uid.toString()
+
+    // Retrieve the current custom areas for the user
+    db.collection("Users").document(userID).get()
+        .addOnSuccessListener { document ->
+            val customAreas = document.get("customArea") as? List<Map<String, Any?>>
+            if (customAreas != null) {
+                // Filter out the area with the specified areaId to delete it
+                val updatedAreas = customAreas.filter { areaMap ->
+                    areaMap["areaId"] != areaId
+                }
+
+                // Update the customArea array with the filtered areas
+                db.collection("Users").document(userID)
+                    .update("customArea", updatedAreas)
+                    .addOnSuccessListener {
+                        onSuccess()
+                    }
+                    .addOnFailureListener { error ->
+                        onFailure(error)
+                    }
+            } else {
+                onFailure(Exception("No custom areas found"))
+            }
+        }
+        .addOnFailureListener { error ->
+            onFailure(error)
+        }
+}
+
+
     fun fetchCustomAreas(onSuccess: (List<CustomArea>) -> Unit, onFailure: (Exception) -> Unit) {
         auth = FirebaseAuth.getInstance()
         val userID = auth.currentUser?.uid.toString()

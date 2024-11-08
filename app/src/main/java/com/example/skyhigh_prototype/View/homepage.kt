@@ -85,6 +85,7 @@ import com.example.skyhigh_prototype.Model.MapboxViewModel
 import com.example.skyhigh_prototype.Model.currentLocations
 import com.example.skyhigh_prototype.R
 import com.example.skyhigh_prototype.R.color.dark_blue
+import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.CoroutineScope
