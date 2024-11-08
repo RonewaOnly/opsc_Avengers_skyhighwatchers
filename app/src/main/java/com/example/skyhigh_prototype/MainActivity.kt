@@ -85,7 +85,6 @@ class MainActivity : ComponentActivity() {
     private lateinit var auth: FirebaseAuth
     private lateinit var firestore: FirebaseFirestore
     private lateinit var callbackManager: CallbackManager
-    private lateinit var navController: NavController  // Step 1: Declare navController at the class level
 
     // Initialize FusedLocationProviderClient
     private lateinit var fusedLocationProviderClient: FusedLocationProviderClient
@@ -118,13 +117,20 @@ class MainActivity : ComponentActivity() {
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this)
 
         setContent {
-            navController = rememberNavController()  // Step 2: Initialize navController
+            val navController = rememberNavController()
+
+            // Check if user is already logged in and navigate if so
+            LaunchedEffect(Unit) {
+                if (auth.currentUser != null) {
+                    navController.navigate("homepage")
+                }
+            }
 
             var isDarkTheme by remember { mutableStateOf(false) }
             MaterialTheme(colorScheme = if (isDarkTheme) getDarkColors() else getLightColors()) {
                 MyAppNavHost(
                     fusedLocationProviderClient,
-                    navController = navController as NavHostController,
+                    navController = navController,
                     viewModel,
                     isDarkTheme,
                     onThemeChange = { isDarkTheme = it },
@@ -133,15 +139,10 @@ class MainActivity : ComponentActivity() {
                 )
             }
         }
-
-        // Check if user is already logged in and navigate if so
-        if (auth.currentUser != null) {
-            navController.navigate("homepage")  // Navigate directly if the user is already logged in
-        }
     }
 
     // Handle Facebook AccessToken
-    private fun handleFacebookAccessToken(token: AccessToken) {
+    private fun handleFacebookAccessToken(token: AccessToken, navController: NavController) {
         val credential: AuthCredential = FacebookAuthProvider.getCredential(token.token)
 
         auth.signInWithCredential(credential).addOnCompleteListener(this) { task ->
@@ -149,7 +150,7 @@ class MainActivity : ComponentActivity() {
                 // Successful Firebase login with Facebook
                 val user = auth.currentUser
                 user?.let {
-                    checkAndStoreUserInFirestore(it.uid, it.displayName, it.email)
+                    checkAndStoreUserInFirestore(it.uid, it.displayName, it.email, navController)
                 }
             } else {
                 Log.w("FacebookLogin", "signInWithCredential:failure", task.exception)
@@ -158,7 +159,7 @@ class MainActivity : ComponentActivity() {
     }
 
     // Check and Store User in Firestore
-    private fun checkAndStoreUserInFirestore(userId: String, name: String?, email: String?) {
+    private fun checkAndStoreUserInFirestore(userId: String, name: String?, email: String?, navController: NavController) {
         val userRef = firestore.collection("Users").document(userId)
 
         userRef.get().addOnSuccessListener { document ->
@@ -169,13 +170,13 @@ class MainActivity : ComponentActivity() {
                 userRef.set(userData).addOnSuccessListener {
                     Log.d("Firestore", "User added to Firestore")
                     // Navigate to the homepage after user info is saved in Firestore
-                    navController.navigate("homepage")  // Step 3: Use navController to navigate
+                    navController.navigate("homepage")
                 }.addOnFailureListener { e ->
                     Log.w("Firestore", "Error adding user", e)
                 }
             } else {
                 Log.d("Firestore", "User already exists in Firestore")
-                navController.navigate("homepage")  // Navigate if user already exists in Firestore
+                navController.navigate("homepage")
             }
         }.addOnFailureListener { e ->
             Log.w("Firestore", "Failed to check user in Firestore", e)
@@ -183,12 +184,12 @@ class MainActivity : ComponentActivity() {
     }
 
     // Facebook login function
-    fun performFacebookLogin() {
+    fun performFacebookLogin(navController: NavController) {
         LoginManager.getInstance().logInWithReadPermissions(this, listOf("email", "public_profile"))
         LoginManager.getInstance()
             .registerCallback(callbackManager, object : FacebookCallback<LoginResult> {
                 override fun onSuccess(result: LoginResult) {
-                    handleFacebookAccessToken(result.accessToken)
+                    handleFacebookAccessToken(result.accessToken, navController)
                 }
 
                 override fun onCancel() {
