@@ -45,7 +45,6 @@ class DatabaseHandler{
             .requestIdToken(context.getString(R.string.default_web_client_id)) // From google-services.json
             .requestEmail()
             .build()
-
         googleSignInClient = GoogleSignIn.getClient(context, gso)
         auth = FirebaseAuth.getInstance()
     }
@@ -98,7 +97,7 @@ class DatabaseHandler{
         val userData = UserDetails(firstname = userName, lastname = "", email = userEmail, username = userName)
 
         // Save user data in Firestore or your database
-        FirebaseFirestore.getInstance().collection("users").document(userId)
+        FirebaseFirestore.getInstance().collection("Users").document(userId)
             .set(userData)
             .addOnSuccessListener {
                 // Data successfully written to the database
