@@ -8,7 +8,9 @@ import android.os.Handler
 import android.util.Log
 import com.google.firebase.Timestamp
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.navigation.NavController
 import com.example.skyhigh_prototype.Data.Achievement
 import com.example.skyhigh_prototype.Data.BirdFeed
@@ -22,8 +24,10 @@ import com.example.skyhigh_prototype.R
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions.*
 import com.google.android.gms.common.api.ApiException
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
@@ -40,33 +44,37 @@ class DatabaseHandler{
     // Initialize Google Sign-In
     fun initGoogleSignIn(context: Context) {
         // Configure Google Sign-In
-        val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-            .requestIdToken(context.getString(R.string.default_web_client_id)) // From google-services.json
+        val gso = Builder(DEFAULT_SIGN_IN)
+            .requestIdToken(context.getString(R.string.default_web_client_id))
+            .requestId() // Explicitly request user ID
             .requestEmail()
             .build()
+
 
         googleSignInClient = GoogleSignIn.getClient(context, gso)
         auth = FirebaseAuth.getInstance()
     }
 
     // Start Google Sign-In Intent
-    fun signInWithGoogle(activity: Activity, signInLauncher: ActivityResultLauncher<Intent>) {
+    fun signInWithGoogle(activity: Activity, signInLauncher: ActivityResultLauncher<Intent>, onSuccess: () -> Unit, onError: (String) -> Unit) {
         val signInIntent = googleSignInClient.signInIntent
         signInLauncher.launch(signInIntent)
+        onSuccess()
     }
 
     // Handle Google Sign-In Result
     fun handleSignInResult(data: Intent?, onSuccess: () -> Unit, onError: (String) -> Unit) {
-        val task = GoogleSignIn.getSignedInAccountFromIntent(data)
-        try {
-            val account = task.getResult(ApiException::class.java)
-            if (account != null) {
-                firebaseAuthWithGoogle(account.idToken!!, onSuccess, onError)
+            val task = GoogleSignIn.getSignedInAccountFromIntent(data)
+            try {
+                val account = task.getResult(ApiException::class.java)
+                if (account != null) {
+                    firebaseAuthWithGoogle(account.idToken!!, onSuccess, onError)
+                }
+            } catch (e: ApiException) {
+                onError("Google sign-in failed ${e.message}")
+                e.message?.let { Log.e("Google sign-in failed:", it.toString()) }
             }
-        } catch (e: ApiException) {
-            onError("Google sign-in failed")
-            e.message?.let { Log.e("Google sign-in failed:", it) }
-        }
+
     }
 
     private fun firebaseAuthWithGoogle(idToken: String, onSuccess: () -> Unit, onError: (String) -> Unit) {
@@ -75,9 +83,33 @@ class DatabaseHandler{
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
                     onSuccess()
+
+                    // Sign-in success
+                    val user = FirebaseAuth.getInstance().currentUser
+                    user?.let {
+                        saveUserToDatabase(it) // Save user to your database
+                        onSuccess() // Call success callback
+                    }
                 } else {
                     onError("Firebase authentication failed")
                 }
+            }
+    }
+    //this function will be used user that will sign with google and/or facebook
+    private fun saveUserToDatabase(user: FirebaseUser) {
+        val userId = user.uid
+        val userName = user.displayName ?: "Anonymous"
+        val userEmail = user.email ?: ""
+
+        val userData = UserDetails(firstname = userName, lastname = "surname",email=  userEmail)
+        // Save user data in Firestore or your database
+        FirebaseFirestore.getInstance().collection("Users").document(userId)
+            .set(userData)
+            .addOnSuccessListener {
+                // Data successfully written to the database
+            }
+            .addOnFailureListener { e ->
+                Log.w("DatabaseError", "Error adding user to database", e)
             }
     }
     fun Login(email: String,password: String,context: Context, navController: NavController ,onSuccess: () -> Unit,onError: (String) -> Unit){
