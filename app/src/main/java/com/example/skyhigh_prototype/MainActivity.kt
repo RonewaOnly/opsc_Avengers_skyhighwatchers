@@ -105,9 +105,7 @@ class MainActivity : ComponentActivity() {
             //handler to delay intent
             @Suppress("DEPRECATION")
             Handler().postDelayed({
-                //navigating to home page
-                //val navController = null
-                //navController.navigate("homepage")
+
             }, 2000)
         }else{
 

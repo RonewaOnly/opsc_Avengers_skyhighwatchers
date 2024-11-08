@@ -90,8 +90,8 @@ fun NavOption(
         composable("App_info") {
             navigateToAppInfo(rememberNav)
         }
-        composable(route = "DeleteUserAccount") {
-            DeleteUserAccount()
+        composable("DeleteUserAccount") {
+            DeleteUserAccount(rememberNav)
         }
         composable(route = "UpdatePasswordDialog") {
 

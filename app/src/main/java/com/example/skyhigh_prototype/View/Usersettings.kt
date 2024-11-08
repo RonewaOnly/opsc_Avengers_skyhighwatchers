@@ -100,15 +100,7 @@ fun Profile(navController: NavController, databaseHandler: DatabaseHandler){
         onEditCustomArea = {},
        // onDeleteCustomArea = {databaseHandler.deleteCustomArea()},
         onDeleteCustomArea = {
-            databaseHandler.deleteCustomArea(
-                areaId = "",
-                onSuccess = {
-                    println("Custom area deleted successfully.")
-                },
-                onFailure = { error ->
-                    println("Failed to delete custom area: ${error.message}")
-                }
-            )
+
         },
         onAddCustomArea = { },
         onSettingsClick = {  navController.navigate("settings") },

@@ -13,13 +13,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.navigation.NavController
 import com.example.skyhigh_prototype.MainActivity
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.firestore.FirebaseFirestore
 
 @Composable
-fun DeleteUserAccount() {
+fun DeleteUserAccount(navController: NavController) {
 
     //alert dialog variable
     var deleteAlertDialog by remember { mutableStateOf(true) }
@@ -44,9 +45,8 @@ fun DeleteUserAccount() {
 
                             //deleting account from authentication
                             user.delete()
-
-
-
+                            navController.navigate("login"
+                            )
 
                         } catch (e: Exception) {
                             Log.e("", "")
