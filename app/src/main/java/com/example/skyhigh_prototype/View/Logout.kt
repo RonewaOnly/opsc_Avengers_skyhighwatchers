@@ -46,7 +46,7 @@ fun Logout(navController: NavController) {
 
                     //to delay intent to login page
                     @Suppress("DEPRECATION") Handler().postDelayed({
-                        navController.navigate("logout"
+                        navController.navigate("login"
                         )
                     }, 2000)
 
