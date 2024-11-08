@@ -16,20 +16,20 @@ Implementing Google and Social Media sign in make it easier for users to sign up
 A study shows that young adults have utilised social logins to log into an application or website, 
 preferring this method as opposed to creating a username and password for each site or app.
 
-General Settings
+#### General Settings
 General settings will include toggling between using the metric system (kilometres) or imperial system
 (miles). The user will be able to calculate the maximum distance that the user is willing to travel to a bird watching hotspot.
 
-User Profile
+#### User Profile
 User will be able to manage their profile including changing personal information password and delete their accounts and data. 
 
-Birds Records
+#### Birds Records
 A user will be able to create bird records including name, location, date and time, image and a description.
 
-Camera 
+#### Camera 
 A camera function will allow users to capture images of birds in which will help users create a meaningful record. 
 
-Geo Location
+#### Geo Location
 As the application will be using location services Geo Location will help to get the current location of the user in real time 
 and using the user will help in providing the nearest bird viewing spots.
 
@@ -112,7 +112,7 @@ Users can log out of the application.
 
 ## Authors
 
-Collectibles Den is the brainchild of Ronewa Maselesele, Bongani Chauke, and Tshepang Mafona, 
+Sky High Watchers is the brainchild of Ronewa Maselesele, Bongani Chauke, and Tshepang Mafona, 
 who are passionate about creating innovative solutions for bird lovers worldwide.
 
 ## License
