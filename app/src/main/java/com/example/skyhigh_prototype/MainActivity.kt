@@ -94,7 +94,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         databaseHandle = DatabaseHandler()
         databaseHandle.initGoogleSignIn(this)
-
+        databaseHandle.initFacebookLogin()
         // Initialize Firebase Instances
         auth = FirebaseAuth.getInstance()
         firestore = FirebaseFirestore.getInstance()
@@ -119,12 +119,12 @@ class MainActivity : ComponentActivity() {
         setContent {
             val navController = rememberNavController()
 
-            // Check if user is already logged in and navigate if so
-            LaunchedEffect(Unit) {
-                if (auth.currentUser != null) {
-                    navController.navigate("homepage")
-                }
-            }
+//            // Check if user is already logged in and navigate if so
+//            LaunchedEffect(Unit) {
+//                if (auth.currentUser != null) {
+//                    navController.navigate("homepage")
+//                }
+//            }
 
             var isDarkTheme by remember { mutableStateOf(false) }
             MaterialTheme(colorScheme = if (isDarkTheme) getDarkColors() else getLightColors()) {
@@ -141,71 +141,10 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    // Handle Facebook AccessToken
-    private fun handleFacebookAccessToken(token: AccessToken, navController: NavController) {
-        val credential: AuthCredential = FacebookAuthProvider.getCredential(token.token)
-
-        auth.signInWithCredential(credential).addOnCompleteListener(this) { task ->
-            if (task.isSuccessful) {
-                // Successful Firebase login with Facebook
-                val user = auth.currentUser
-                user?.let {
-                    checkAndStoreUserInFirestore(it.uid, it.displayName, it.email, navController)
-                }
-            } else {
-                Log.w("FacebookLogin", "signInWithCredential:failure", task.exception)
-            }
-        }
-    }
-
-    // Check and Store User in Firestore
-    private fun checkAndStoreUserInFirestore(userId: String, name: String?, email: String?, navController: NavController) {
-        val userRef = firestore.collection("Users").document(userId)
-
-        userRef.get().addOnSuccessListener { document ->
-            if (!document.exists()) {
-                // If user does not exist in Firestore, add them
-                val userData = UserDetails(name, "", email)
-
-                userRef.set(userData).addOnSuccessListener {
-                    Log.d("Firestore", "User added to Firestore")
-                    // Navigate to the homepage after user info is saved in Firestore
-                    navController.navigate("homepage")
-                }.addOnFailureListener { e ->
-                    Log.w("Firestore", "Error adding user", e)
-                }
-            } else {
-                Log.d("Firestore", "User already exists in Firestore")
-                navController.navigate("homepage")
-            }
-        }.addOnFailureListener { e ->
-            Log.w("Firestore", "Failed to check user in Firestore", e)
-        }
-    }
-
-    // Facebook login function
-    fun performFacebookLogin(navController: NavController) {
-        LoginManager.getInstance().logInWithReadPermissions(this, listOf("email", "public_profile"))
-        LoginManager.getInstance()
-            .registerCallback(callbackManager, object : FacebookCallback<LoginResult> {
-                override fun onSuccess(result: LoginResult) {
-                    handleFacebookAccessToken(result.accessToken, navController)
-                }
-
-                override fun onCancel() {
-                    Log.d("FacebookLogin", "Facebook login cancelled")
-                }
-
-                override fun onError(error: FacebookException) {
-                    Log.w("FacebookLogin", "Facebook login failed", error)
-                }
-            })
-    }
-
-    @Suppress("DEPRECATION")
+    // Override for handling Facebook login results
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        callbackManager.onActivityResult(requestCode, resultCode, data)
+        databaseHandle.initFacebookLogin().onActivityResult(requestCode, resultCode, data)
     }
 }
 

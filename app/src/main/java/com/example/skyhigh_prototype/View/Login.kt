@@ -318,7 +318,12 @@ fun Login(navController: NavController, databaseHandle: DatabaseHandler, googleS
                     Button(
                         onClick = {
                             //calling function to login with facebook
-                            context.performFacebookLogin(navController)
+                            //context.performFacebookLogin(navController)
+                            databaseHandle.performFacebookLogin(context, navController, onSuccess = {
+                                navController.navigate("homepage")
+                            }, onError = {
+                                Toast.makeText(context,it,Toast.LENGTH_LONG).show()
+                            })
                         },
                         modifier = Modifier
                             .padding(5.dp, 5.dp)

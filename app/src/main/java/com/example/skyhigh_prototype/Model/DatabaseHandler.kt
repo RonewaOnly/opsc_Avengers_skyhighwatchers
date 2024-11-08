@@ -19,10 +19,17 @@ import com.example.skyhigh_prototype.Data.Reports
 import com.example.skyhigh_prototype.Data.Settings
 import com.example.skyhigh_prototype.Data.UserDetails
 import com.example.skyhigh_prototype.R
+import com.facebook.AccessToken
+import com.facebook.CallbackManager
+import com.facebook.FacebookCallback
+import com.facebook.FacebookException
+import com.facebook.login.LoginManager
+import com.facebook.login.LoginResult
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
+import com.google.firebase.auth.FacebookAuthProvider
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.GoogleAuthProvider
@@ -37,6 +44,7 @@ class DatabaseHandler{
     private val storage = FirebaseStorage.getInstance()
     private var auth: FirebaseAuth = FirebaseAuth.getInstance()
     lateinit var googleSignInClient: GoogleSignInClient
+    private lateinit var callbackManager: CallbackManager
 
     // Initialize Google Sign-In
     fun initGoogleSignIn(context: Context) {
@@ -48,6 +56,13 @@ class DatabaseHandler{
         googleSignInClient = GoogleSignIn.getClient(context, gso)
         auth = FirebaseAuth.getInstance()
     }
+    // Initialize Facebook Login
+    fun initFacebookLogin(): CallbackManager {
+        callbackManager = CallbackManager.Factory.create()
+        return callbackManager
+    }
+
+
 
     // Start Google Sign-In Intent
     fun signInWithGoogle(activity: Activity, signInLauncher: ActivityResultLauncher<Intent>,  onSuccess: () -> Unit,
@@ -87,7 +102,66 @@ class DatabaseHandler{
                 }
             }
     }
+    // Handle Facebook AccessToken
+    private fun handleFacebookAccessToken(token: AccessToken, navController: NavController, onSuccess: () -> Unit, onError: (String) -> Unit) {
+        val credential = FacebookAuthProvider.getCredential(token.token)
+        auth.signInWithCredential(credential).addOnCompleteListener { task ->
+            if (task.isSuccessful) {
+                val user = auth.currentUser
+                user?.let {
+                    checkAndStoreUserInFirestore(it.uid, it.displayName, it.email, navController, onSuccess, onError)
+                }
+            } else {
+                onError("Facebook authentication failed")
+                task.exception?.message?.let { Log.w("FacebookLogin", it) }
+            }
+        }
+    }
 
+    // Perform Facebook Login
+    fun performFacebookLogin(activity: Activity, navController: NavController, onSuccess: () -> Unit, onError: (String) -> Unit) {
+        LoginManager.getInstance().logInWithReadPermissions(activity, listOf("email", "public_profile"))
+        LoginManager.getInstance().registerCallback(callbackManager, object :
+            FacebookCallback<LoginResult> {
+            override fun onSuccess(result: LoginResult) {
+                handleFacebookAccessToken(result.accessToken, navController, onSuccess, onError)
+            }
+
+            override fun onCancel() {
+                Log.d("FacebookLogin", "Facebook login cancelled")
+            }
+
+            override fun onError(error: FacebookException) {
+                onError("Facebook login failed: ${error.message}")
+            }
+        })
+    }
+
+    // Check if user exists in Firestore and store if not
+    private fun checkAndStoreUserInFirestore(userId: String, name: String?, email: String?, navController: NavController, onSuccess: () -> Unit, onError: (String) -> Unit) {
+        val userRef = db.collection("Users").document(userId)
+
+        userRef.get().addOnSuccessListener { document ->
+            if (!document.exists()) {
+                val userData = UserDetails(firstname = name ?: "Anonymous", lastname = "", email = email ?: "", username = name ?: "User")
+                userRef.set(userData).addOnSuccessListener {
+                    Log.d("Firestore", "User added to Firestore")
+                    navController.navigate("homepage")  // Navigate after successful save
+                    onSuccess()
+                }.addOnFailureListener { e ->
+                    Log.w("Firestore", "Error adding user to Firestore", e)
+                    onError("Failed to add user to Firestore")
+                }
+            } else {
+                Log.d("Firestore", "User already exists in Firestore")
+                navController.navigate("homepage")  // Navigate if user exists
+                onSuccess()
+            }
+        }.addOnFailureListener { e ->
+            Log.w("Firestore", "Failed to check user in Firestore", e)
+            onError("Failed to check user in Firestore")
+        }
+    }
     // Function to save user data to the database
     private fun saveUserToDatabase(user: FirebaseUser) {
         val userId = user.uid
