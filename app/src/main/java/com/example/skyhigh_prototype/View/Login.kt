@@ -51,6 +51,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.example.skyhigh_prototype.MainActivity
 import com.example.skyhigh_prototype.Model.DatabaseHandler
 import com.example.skyhigh_prototype.R
 import com.google.firebase.auth.FirebaseAuth
@@ -75,6 +76,7 @@ fun Login(navController: NavController, databaseHandle: DatabaseHandler, googleS
     //Error states
     var emailError by remember { mutableStateOf("") }
     var passwordError by remember { mutableStateOf("") }
+    val context = LocalContext.current as MainActivity
 
     //firebase instances
     //var auth : FirebaseAuth
@@ -107,7 +109,7 @@ fun Login(navController: NavController, databaseHandle: DatabaseHandler, googleS
             )
         }
 
-        Spacer(modifier = Modifier.height(25.dp))
+        Spacer(modifier = Modifier.height(20.dp))
 
         Text(
             text = "Hi, Welcome Back...",
@@ -115,7 +117,7 @@ fun Login(navController: NavController, databaseHandle: DatabaseHandler, googleS
             fontSize = 18.sp,
             modifier = Modifier.padding(30.dp, 0.dp)
         )
-        Spacer(modifier = Modifier.height(10.dp))
+        Spacer(modifier = Modifier.height(0.dp))
         // box 2
         Box(
             modifier = Modifier
@@ -155,7 +157,7 @@ fun Login(navController: NavController, databaseHandle: DatabaseHandler, googleS
                     )
                 }//end
 
-                Spacer(modifier = Modifier.height(10.dp))
+                Spacer(modifier = Modifier.height(5.dp))
                 //password input field
                 OutlinedTextField(
                     value = password,
@@ -198,14 +200,13 @@ fun Login(navController: NavController, databaseHandle: DatabaseHandler, googleS
 
             }//end of column
 
-            //val context for toast message
-            val context = LocalContext.current
+
 
             //box for remember me and forgot password
             Box(
                 modifier = Modifier
                     .fillMaxWidth() // Make the Box fill the entire width of the screen
-                    .padding(top = 170.dp) // Add top padding to position the elements as needed
+                    .padding(top = 190.dp) // Add top padding to position the elements as needed
             ) {
 
                 Row(
@@ -232,14 +233,10 @@ fun Login(navController: NavController, databaseHandle: DatabaseHandler, googleS
                 }
             }//End
 
-            Spacer(modifier = Modifier.height(200.dp))
+            Spacer(modifier = Modifier.height(250.dp))
             //button to login
             Button(
                 onClick = {
-
-                    //initialising firebase instances
-                   // auth = FirebaseAuth.getInstance()
-
 
                     // Validate all input fields before proceeding
                     emailError = ValidateForms.loginEmail(username)
@@ -255,16 +252,13 @@ fun Login(navController: NavController, databaseHandle: DatabaseHandler, googleS
 
                 shape = RoundedCornerShape(size = 10.dp),
                 modifier = Modifier
-                    .padding(70.dp, 250.dp, 0.dp, 0.dp)
+                    .padding(70.dp, 265.dp, 0.dp, 0.dp)
                     .width(250.dp)
                     .height(50.dp)
 
             ) {
                 Text(text = "Login")
             }
-
-
-            HorizontalDivider(modifier = Modifier.padding(0.dp, 350.dp, 0.dp, 0.dp))
 
             Column(
                 modifier = Modifier.align(Alignment.Center),
@@ -276,15 +270,14 @@ fun Login(navController: NavController, databaseHandle: DatabaseHandler, googleS
                     text = "or continue with",
                     textAlign = TextAlign.Center,
                     fontSize = 18.sp,
-                    modifier = Modifier.padding(top = 300.dp) // Adjusted padding
+                    modifier = Modifier.padding(top = 250.dp) // Adjusted padding
                 )
 
-                Spacer(modifier = Modifier.height(20.dp))
+
                 //row for social media buttons
                 Row(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 20.dp), // Optional padding to center the buttons within the column
+                        .fillMaxWidth(),
                     horizontalArrangement = Arrangement.Center, // Center buttons horizontally
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -301,7 +294,7 @@ fun Login(navController: NavController, databaseHandle: DatabaseHandler, googleS
                             })
                         },
                         modifier = Modifier
-                            .padding(10.dp, 5.dp)
+                            .padding(2.dp, 2.dp)
                             .width(150.dp),
                         shape = RectangleShape,
                         colors = buttonColors(
@@ -323,9 +316,12 @@ fun Login(navController: NavController, databaseHandle: DatabaseHandler, googleS
 
                     // Facebook account button
                     Button(
-                        onClick = { /*TODO*/ },
+                        onClick = {
+                            //calling function to login with facebook
+                            context.performFacebookLogin(navController)
+                        },
                         modifier = Modifier
-                            .padding(10.dp, 5.dp)
+                            .padding(5.dp, 5.dp)
                             .width(150.dp),
                         shape = RectangleShape,
                         colors = buttonColors(
@@ -348,7 +344,6 @@ fun Login(navController: NavController, databaseHandle: DatabaseHandler, googleS
                 }
                 // Column for "Don't have an account?" and "register" button
                 Row(
-                    modifier = Modifier.padding(top = 30.dp),
                     horizontalArrangement = Arrangement.Center, // Center buttons horizontally
                     verticalAlignment = Alignment.CenterVertically
                 ) {
