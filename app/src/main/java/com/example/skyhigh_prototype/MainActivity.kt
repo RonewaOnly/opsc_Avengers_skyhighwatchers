@@ -85,6 +85,7 @@ class MainActivity : ComponentActivity() {
     private lateinit var auth: FirebaseAuth
     private lateinit var firestore: FirebaseFirestore
     private lateinit var callbackManager: CallbackManager
+    private lateinit var navController: NavController  // Step 1: Declare navController at the class level
 
     // Initialize FusedLocationProviderClient
     private lateinit var fusedLocationProviderClient: FusedLocationProviderClient
@@ -94,84 +95,70 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         databaseHandle = DatabaseHandler()
         databaseHandle.initGoogleSignIn(this)
+
         // Initialize Firebase Instances
         auth = FirebaseAuth.getInstance()
         firestore = FirebaseFirestore.getInstance()
 
-        // Check if user is already logged in
-        if (auth.currentUser != null) {
-            //navController.navigate("homepage")
-        } else {
-            // Initialize Facebook CallbackManager
-            callbackManager = CallbackManager.Factory.create()
-        }
+        // Initialize Facebook CallbackManager
+        callbackManager = CallbackManager.Factory.create()
 
         val googleSignInLauncher =
             registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
                 val data = result.data
                 databaseHandle.handleSignInResult(data, onSuccess = {
                     Toast.makeText(this, "Google Sign-In Successful", Toast.LENGTH_SHORT).show()
-
                 }, onError = { error ->
                     Toast.makeText(this, error, Toast.LENGTH_SHORT).show()
                 })
             }
+
         // Initialize FusedLocationProviderClient in the ViewModel
         locationViewModel.initLocationClient(this)
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this)
 
         setContent {
-
-            val navController = rememberNavController()
+            navController = rememberNavController()  // Step 2: Initialize navController
 
             var isDarkTheme by remember { mutableStateOf(false) }
             MaterialTheme(colorScheme = if (isDarkTheme) getDarkColors() else getLightColors()) {
                 MyAppNavHost(
                     fusedLocationProviderClient,
-                    navController = navController,
+                    navController = navController as NavHostController,
                     viewModel,
                     isDarkTheme,
                     onThemeChange = { isDarkTheme = it },
                     databaseHandle,
                     googleSignInLauncher
                 )
+            }
+        }
 
+        // Check if user is already logged in and navigate if so
+        if (auth.currentUser != null) {
+            navController.navigate("homepage")  // Navigate directly if the user is already logged in
+        }
+    }
+
+    // Handle Facebook AccessToken
+    private fun handleFacebookAccessToken(token: AccessToken) {
+        val credential: AuthCredential = FacebookAuthProvider.getCredential(token.token)
+
+        auth.signInWithCredential(credential).addOnCompleteListener(this) { task ->
+            if (task.isSuccessful) {
+                // Successful Firebase login with Facebook
+                val user = auth.currentUser
+                user?.let {
+                    checkAndStoreUserInFirestore(it.uid, it.displayName, it.email)
+                }
+            } else {
+                Log.w("FacebookLogin", "signInWithCredential:failure", task.exception)
             }
         }
     }
 
-    //overwrite
-    @Suppress("DEPRECATION")
-    @Deprecated("This method has been deprecated in favor of using the Activity Result API\n      which brings increased type safety via an {@link ActivityResultContract} and the prebuilt\n      contracts for common intents available in\n      {@link androidx.activity.result.contract.ActivityResultContracts}, provides hooks for\n      testing, and allow receiving results in separate, testable classes independent from your\n      activity. Use\n      {@link #registerForActivityResult(ActivityResultContract, ActivityResultCallback)}\n      with the appropriate {@link ActivityResultContract} and handling the result in the\n      {@link ActivityResultCallback#onActivityResult(Object) callback}.")
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        callbackManager.onActivityResult(requestCode, resultCode, data)
-    }
-
-
-    // Handle Facebook AccessToken
-    private fun handleFacebookAccessToken(token: AccessToken, navController: NavController) {
-        val credential: AuthCredential = FacebookAuthProvider.getCredential(token.token)
-
-        auth.signInWithCredential(credential).addOnCompleteListener(this) { task ->
-                if (task.isSuccessful) {
-                    // Successful Firebase login with Facebook
-                    val user = auth.currentUser
-                    user?.let {
-                        checkAndStoreUserInFirestore(
-                            it.uid, it.displayName, it.email, navController
-                        )
-                    }
-                } else {
-                    Log.w("FacebookLogin", "signInWithCredential:failure", task.exception)
-                }
-            }
-    }
-
     // Check and Store User in Firestore
-    private fun checkAndStoreUserInFirestore(
-        userId: String, name: String?, email: String?, navController: NavController
-    ) {
+    private fun checkAndStoreUserInFirestore(userId: String, name: String?, email: String?) {
         val userRef = firestore.collection("Users").document(userId)
 
         userRef.get().addOnSuccessListener { document ->
@@ -180,31 +167,28 @@ class MainActivity : ComponentActivity() {
                 val userData = UserDetails(name, "", email)
 
                 userRef.set(userData).addOnSuccessListener {
-                        Log.d("Firestore", "User added to Firestore")
-                        //handler to delay intent
-                        @Suppress("DEPRECATION") Handler().postDelayed({
-                            //navigating to home page
-                            navController.navigate("homepage")
-                        }, 2000)
-                    }.addOnFailureListener { e ->
-                        Log.w("Firestore", "Error adding user", e)
-                    }
+                    Log.d("Firestore", "User added to Firestore")
+                    // Navigate to the homepage after user info is saved in Firestore
+                    navController.navigate("homepage")  // Step 3: Use navController to navigate
+                }.addOnFailureListener { e ->
+                    Log.w("Firestore", "Error adding user", e)
+                }
             } else {
                 Log.d("Firestore", "User already exists in Firestore")
+                navController.navigate("homepage")  // Navigate if user already exists in Firestore
             }
         }.addOnFailureListener { e ->
             Log.w("Firestore", "Failed to check user in Firestore", e)
         }
     }
 
-
-    // face login function
-    fun performFacebookLogin(navController: NavController) {
+    // Facebook login function
+    fun performFacebookLogin() {
         LoginManager.getInstance().logInWithReadPermissions(this, listOf("email", "public_profile"))
         LoginManager.getInstance()
             .registerCallback(callbackManager, object : FacebookCallback<LoginResult> {
                 override fun onSuccess(result: LoginResult) {
-                    handleFacebookAccessToken(result.accessToken, navController)
+                    handleFacebookAccessToken(result.accessToken)
                 }
 
                 override fun onCancel() {
@@ -217,7 +201,13 @@ class MainActivity : ComponentActivity() {
             })
     }
 
+    @Suppress("DEPRECATION")
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        callbackManager.onActivityResult(requestCode, resultCode, data)
+    }
 }
+
 //    private fun hasLocationPermission(): Boolean {
 //        return ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
 //    }
