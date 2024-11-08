@@ -54,6 +54,7 @@ import com.example.skyhigh_prototype.Model.MapboxViewModel
 import com.example.skyhigh_prototype.Model.currentLocations
 import com.example.skyhigh_prototype.View.ForgotPassword
 import com.example.skyhigh_prototype.View.Login
+import com.example.skyhigh_prototype.View.Logout
 import com.example.skyhigh_prototype.View.Main
 import com.example.skyhigh_prototype.View.Register
 import com.example.skyhigh_prototype.ui.theme.DarkBackground
@@ -166,7 +167,10 @@ fun SkyHigh(fusedLocationProviderClient: FusedLocationProviderClient, mainActivi
             ForgotPassword(rememberNav)
         }
         composable("homepage") {
-            Main( mainActivity.mapboxViewModel,ebirdView, isDarkTheme, onThemeChange,databaseHandle) // Passes ViewModel to Main Composable
+            Main( mainActivity.mapboxViewModel,ebirdView, isDarkTheme, onThemeChange,databaseHandle,rememberNav) // Passes ViewModel to Main Composable
+        }
+        composable("logout"){
+            Logout(rememberNav)
         }
     }
 }
