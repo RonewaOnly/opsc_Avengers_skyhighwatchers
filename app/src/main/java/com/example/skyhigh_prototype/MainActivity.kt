@@ -1,12 +1,11 @@
 package com.example.skyhigh_prototype
 
-import android.Manifest
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.os.Bundle
+import android.os.Handler
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -27,7 +26,6 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -40,19 +38,18 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.skyhigh_prototype.Data.UserDetails
 import com.example.skyhigh_prototype.Model.BirdViewModel
 import com.example.skyhigh_prototype.Model.DatabaseHandler
 import com.example.skyhigh_prototype.Model.LocationViewModel
 import com.example.skyhigh_prototype.Model.MapboxViewModel
-import com.example.skyhigh_prototype.Model.currentLocations
 import com.example.skyhigh_prototype.View.ForgotPassword
+import com.example.skyhigh_prototype.View.Homepage
 import com.example.skyhigh_prototype.View.Login
 import com.example.skyhigh_prototype.View.Logout
 import com.example.skyhigh_prototype.View.Main
@@ -65,10 +62,19 @@ import com.example.skyhigh_prototype.ui.theme.LightBackground
 import com.example.skyhigh_prototype.ui.theme.LightOnPrimary
 import com.example.skyhigh_prototype.ui.theme.LightPrimary
 import com.example.skyhigh_prototype.ui.theme.LightSurface
+import com.facebook.AccessToken
+import com.facebook.CallbackManager
+import com.facebook.FacebookCallback
+import com.facebook.FacebookException
+import com.facebook.login.LoginManager
+import com.facebook.login.LoginResult
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
+import com.google.firebase.auth.AuthCredential
+import com.google.firebase.auth.FacebookAuthProvider
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.collect
 import java.util.Locale
 
 class MainActivity : ComponentActivity() {
@@ -77,7 +83,9 @@ class MainActivity : ComponentActivity() {
     private val viewModel: BirdViewModel by viewModels()
     private val locationViewModel: LocationViewModel by viewModels()
     private lateinit var databaseHandle: DatabaseHandler
-
+    private lateinit var auth: FirebaseAuth
+    private lateinit var firestore: FirebaseFirestore
+    private lateinit var callbackManager: CallbackManager
 
     // Initialize FusedLocationProviderClient
     private lateinit var fusedLocationProviderClient: FusedLocationProviderClient
@@ -87,46 +95,144 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         databaseHandle = DatabaseHandler()
         databaseHandle.initGoogleSignIn(this)
+        // Initialize Firebase Instances
+        auth = FirebaseAuth.getInstance()
+        firestore = FirebaseFirestore.getInstance()
 
-        val googleSignInLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-            val data = result.data
-            databaseHandle.handleSignInResult(data,
-                onSuccess = {
-                    Toast.makeText(this, "Google Sign-In Successful", Toast.LENGTH_SHORT).show()
-                    // Navigate to the next screen
-                },
-                onError = { error ->
-                    Toast.makeText(this, error, Toast.LENGTH_SHORT).show()
-                }
-            )
+
+        // Check if user is already logged in
+        if (auth.currentUser != null) {
+            //handler to delay intent
+            @Suppress("DEPRECATION")
+            Handler().postDelayed({
+                //navigating to home page
+                //val navController = null
+                //navController.navigate("homepage")
+            }, 2000)
+        }else{
+
+            // Initialize Facebook CallbackManager
+            callbackManager = CallbackManager.Factory.create()
         }
+
+
+
+        val googleSignInLauncher =
+            registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+                val data = result.data
+                databaseHandle.handleSignInResult(data,
+                    onSuccess = {
+                        Toast.makeText(this, "Google Sign-In Successful", Toast.LENGTH_SHORT).show()
+                        // Navigate to the next screen
+                    },
+                    onError = { error ->
+                        Toast.makeText(this, error, Toast.LENGTH_SHORT).show()
+                    }
+                )
+            }
         // Initialize FusedLocationProviderClient in the ViewModel
         locationViewModel.initLocationClient(this)
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this)
 
-        // Check for location permissions
-//        if (hasLocationPermission()) {
-//            locationViewModel.requestLocation(this)
-//        } else {
-//            requestLocationPermission()
-//        }
         setContent {
             val navController = rememberNavController()
 
             var isDarkTheme by remember { mutableStateOf(false) }
             MaterialTheme(colorScheme = if (isDarkTheme) getDarkColors() else getLightColors()) {
-                MyAppNavHost(fusedLocationProviderClient,navController = navController, viewModel,isDarkTheme, onThemeChange = { isDarkTheme = it },databaseHandle,googleSignInLauncher)
+                MyAppNavHost(
+                    fusedLocationProviderClient,
+                    navController = navController,
+                    viewModel,
+                    isDarkTheme,
+                    onThemeChange = { isDarkTheme = it },
+                    databaseHandle,
+                    googleSignInLauncher
+                )
 
             }
-
-
-
-
 
             // MyAppNavHost(navController = navController, viewModel)
         }
     }
 
+    //overwrite
+    @Suppress("DEPRECATION")
+    @Deprecated("This method has been deprecated in favor of using the Activity Result API\n      which brings increased type safety via an {@link ActivityResultContract} and the prebuilt\n      contracts for common intents available in\n      {@link androidx.activity.result.contract.ActivityResultContracts}, provides hooks for\n      testing, and allow receiving results in separate, testable classes independent from your\n      activity. Use\n      {@link #registerForActivityResult(ActivityResultContract, ActivityResultCallback)}\n      with the appropriate {@link ActivityResultContract} and handling the result in the\n      {@link ActivityResultCallback#onActivityResult(Object) callback}.")
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        callbackManager.onActivityResult(requestCode, resultCode, data)
+    }
+
+    // Handle Facebook AccessToken
+    private fun handleFacebookAccessToken(token: AccessToken, navController: NavController) {
+        val credential: AuthCredential = FacebookAuthProvider.getCredential(token.token)
+
+        auth.signInWithCredential(credential)
+            .addOnCompleteListener(this) { task ->
+                if (task.isSuccessful) {
+                    // Successful Firebase login with Facebook
+                    val user = auth.currentUser
+                    user?.let {
+                        checkAndStoreUserInFirestore(it.uid, it.displayName, it.email, navController)
+                    }
+                } else {
+                    Log.w("FacebookLogin", "signInWithCredential:failure", task.exception)
+                }
+            }
+    }
+
+    // Check and Store User in Firestore
+    private fun checkAndStoreUserInFirestore(userId: String, name: String?, email: String?, navController: NavController) {
+        val userRef = firestore.collection("Users").document(userId)
+
+        userRef.get().addOnSuccessListener { document ->
+            if (!document.exists()) {
+                // If user does not exist in Firestore, add them
+                val userData = UserDetails(name, "" , email)
+
+                userRef.set(userData)
+                    .addOnSuccessListener {
+                        Log.d("Firestore", "User added to Firestore")
+                        //handler to delay intent
+                        @Suppress("DEPRECATION")
+                        Handler().postDelayed({
+                            //navigating to home page
+                            navController.navigate("homepage")
+                        }, 2000)
+                    }
+                    .addOnFailureListener { e ->
+                        Log.w("Firestore", "Error adding user", e)
+                    }
+            } else {
+                Log.d("Firestore", "User already exists in Firestore")
+            }
+        }.addOnFailureListener { e ->
+            Log.w("Firestore", "Failed to check user in Firestore", e)
+        }
+    }
+
+
+
+    // face login function
+    fun performFacebookLogin(navController: NavController) {
+        LoginManager.getInstance().logInWithReadPermissions(this, listOf("email", "public_profile"))
+        LoginManager.getInstance().registerCallback(callbackManager, object :
+            FacebookCallback<LoginResult> {
+            override fun onSuccess(result: LoginResult) {
+                handleFacebookAccessToken(result.accessToken, navController)
+            }
+
+            override fun onCancel() {
+                Log.d("FacebookLogin", "Facebook login cancelled")
+            }
+
+            override fun onError(error: FacebookException) {
+                Log.w("FacebookLogin", "Facebook login failed", error)
+            }
+        })
+    }
+
+}
 //    private fun hasLocationPermission(): Boolean {
 //        return ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
 //    }
@@ -150,7 +256,7 @@ class MainActivity : ComponentActivity() {
 //    }
 
 
-}
+
 
 @Composable
 fun SkyHigh(fusedLocationProviderClient: FusedLocationProviderClient, mainActivity: MainActivity, ebirdView: BirdViewModel, isDarkTheme: Boolean, onThemeChange: (Boolean) -> Unit, databaseHandle: DatabaseHandler, googleSignInLauncher: ActivityResultLauncher<Intent>) {

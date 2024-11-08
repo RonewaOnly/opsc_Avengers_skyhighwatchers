@@ -5,26 +5,31 @@
     <string name="stop_capture" translatable="false">Stop Capture</string>
     <string name="ebird_api_key" translatable="false">cgb65pqppg3q</string>
 
+    <string name="facebook_app_id" translatable="false">583664090772925</string>
+    <string name="fb_login_protocol_scheme" translatable="false">fb583664090772925</string>
+    <string name="facebook_client_token" translatable="false">c9a3a90930b0093e743030611b7a6594</string>
+
+
     <string name="notification_settings">Notification Settings</string>
     <string name="theme_settings">Theme Settings</string>
     <string name="language_settings">Language Settings</string>
     <string name="change_language">Change Language</string>
     <string name="switch_to_light_mode">Switch to Light Mode</string>
     <string name="switch_to_dark_mode">Switch to Dark Mode</string>
-    <string name="general">General Settings</string>
-    <string name="custom_areas">custom areas</string>
-    <string name="report">report</string>
-    <string name="app_info">app info</string>
-    <string name="define_custom_areas">defined custom areas</string>
-    <string name="new_area_name">new area name</string>
-    <string name="add_new_area">add new area</string>
-    <string name="manage_existing_areas">manage existing areas</string>
-    <string name="delete">delete</string>
-    <string name="report_bird_sighting">report bird sighting</string>
-    <string name="enter_bird_details">enter bird details</string>
-    <string name="new_sighting">new sighting</string>
-    <string name="view_past_reports">view part reports</string>
-    <string name="view_details">view details</string>
+    <string name="general" translatable="false">General Settings</string>
+    <string name="custom_areas" translatable="false">Custom Areas</string>
+    <string name="report" translatable="false">Report Sightings</string>
+    <string name="app_info" translatable="false">App Information</string>
+    <string name="define_custom_areas" translatable="false">Defined Custom Areas</string>
+    <string name="new_area_name" translatable="false">New Area Name</string>
+    <string name="add_new_area" translatable="false">Add New Area</string>
+    <string name="manage_existing_areas" translatable="false">Manage Existing Areas</string>
+    <string name="delete" translatable="false">Delete</string>
+    <string name="report_bird_sighting" translatable="false">Report Bird Sightings</string>
+    <string name="enter_bird_details" translatable="false">Enter Bird Details</string>
+    <string name="new_sighting" translatable="false">Save Sighting</string>
+    <string name="view_past_reports" translatable="false">View Past Reports </string>
+    <string name="view_details" translatable="false">View Details</string>
 
     <string name="default_web_client_id">884947624000-4bbue6q7lcuebqkjiaj6cvtjjfhl4tka.apps.googleusercontent.com</string>
 

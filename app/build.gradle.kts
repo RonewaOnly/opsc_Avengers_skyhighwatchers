@@ -92,6 +92,8 @@ dependencies {
     implementation(libs.play.services.location)
 
     implementation ("com.google.android.gms:play-services-auth:20.7.0")
+    implementation ("com.facebook.android:facebook-android-sdk:latest.release")
+
 
     // Camera
     val cameraVersion = "1.2.2"

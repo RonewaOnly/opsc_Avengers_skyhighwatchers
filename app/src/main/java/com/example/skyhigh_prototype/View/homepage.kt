@@ -96,8 +96,7 @@ fun Main(
     ebirdViewModel: BirdViewModel,
     isDarkTheme: Boolean,
     onThemeChange: (Boolean) -> Unit,
-    databaseHandler: DatabaseHandler,
-    navController: NavController
+    databaseHandler: DatabaseHandler
 ) {
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
@@ -182,7 +181,7 @@ fun Main(
                     MapOption(rememberNavController, ebirdViewModel)
                 }
                 composable("logout") {
-                    Logout(navController)
+                    Logout(rememberNavController)
                 }
             }
             Spacer(modifier = Modifier.padding(contentPadding))
@@ -423,6 +422,7 @@ fun Homepage(ebirdViewModel: BirdViewModel) {
                     getString(context, R.string.ebird_api_key)
                 )
 
+                2 -> TabContent3()
             }
         }
     }
