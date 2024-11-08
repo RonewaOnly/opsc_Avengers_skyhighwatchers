@@ -46,7 +46,12 @@ Any Mobile Android Application
 
 ### Mobile app
 Using an android device after unzipping file opsc_Avengers_skyhighwatchers-main install the apk unsure that you allow permission to install application 
-to your device
+to your device.
+
+##### APK
+Key path store -> C:\Users\RC_Student_lab\AndroidStudioProjects\opsc_Avengers_skyhighwatchers\key.jks
+Password -> romeo_sam123!@#QWE
+Key Alias -> key0
 
 ### Computer
 To use Sky High Watchers first download Android Studio 
