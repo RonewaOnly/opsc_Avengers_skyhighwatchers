@@ -49,7 +49,6 @@ import com.example.skyhigh_prototype.Model.DatabaseHandler
 import com.example.skyhigh_prototype.Model.LocationViewModel
 import com.example.skyhigh_prototype.Model.MapboxViewModel
 import com.example.skyhigh_prototype.View.ForgotPassword
-import com.example.skyhigh_prototype.View.Homepage
 import com.example.skyhigh_prototype.View.Login
 import com.example.skyhigh_prototype.View.Logout
 import com.example.skyhigh_prototype.View.Main
@@ -99,40 +98,30 @@ class MainActivity : ComponentActivity() {
         auth = FirebaseAuth.getInstance()
         firestore = FirebaseFirestore.getInstance()
 
-
         // Check if user is already logged in
         if (auth.currentUser != null) {
-            //handler to delay intent
-            @Suppress("DEPRECATION")
-            Handler().postDelayed({
-
-            }, 2000)
-        }else{
-
+            //navController.navigate("homepage")
+        } else {
             // Initialize Facebook CallbackManager
             callbackManager = CallbackManager.Factory.create()
         }
 
-
-
         val googleSignInLauncher =
             registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
                 val data = result.data
-                databaseHandle.handleSignInResult(data,
-                    onSuccess = {
-                        Toast.makeText(this, "Google Sign-In Successful", Toast.LENGTH_SHORT).show()
-                        // Navigate to the next screen
-                    },
-                    onError = { error ->
-                        Toast.makeText(this, error, Toast.LENGTH_SHORT).show()
-                    }
-                )
+                databaseHandle.handleSignInResult(data, onSuccess = {
+                    Toast.makeText(this, "Google Sign-In Successful", Toast.LENGTH_SHORT).show()
+
+                }, onError = { error ->
+                    Toast.makeText(this, error, Toast.LENGTH_SHORT).show()
+                })
             }
         // Initialize FusedLocationProviderClient in the ViewModel
         locationViewModel.initLocationClient(this)
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this)
 
         setContent {
+
             val navController = rememberNavController()
 
             var isDarkTheme by remember { mutableStateOf(false) }
@@ -148,8 +137,6 @@ class MainActivity : ComponentActivity() {
                 )
 
             }
-
-            // MyAppNavHost(navController = navController, viewModel)
         }
     }
 
@@ -161,17 +148,19 @@ class MainActivity : ComponentActivity() {
         callbackManager.onActivityResult(requestCode, resultCode, data)
     }
 
+
     // Handle Facebook AccessToken
     private fun handleFacebookAccessToken(token: AccessToken, navController: NavController) {
         val credential: AuthCredential = FacebookAuthProvider.getCredential(token.token)
 
-        auth.signInWithCredential(credential)
-            .addOnCompleteListener(this) { task ->
+        auth.signInWithCredential(credential).addOnCompleteListener(this) { task ->
                 if (task.isSuccessful) {
                     // Successful Firebase login with Facebook
                     val user = auth.currentUser
                     user?.let {
-                        checkAndStoreUserInFirestore(it.uid, it.displayName, it.email, navController)
+                        checkAndStoreUserInFirestore(
+                            it.uid, it.displayName, it.email, navController
+                        )
                     }
                 } else {
                     Log.w("FacebookLogin", "signInWithCredential:failure", task.exception)
@@ -180,25 +169,24 @@ class MainActivity : ComponentActivity() {
     }
 
     // Check and Store User in Firestore
-    private fun checkAndStoreUserInFirestore(userId: String, name: String?, email: String?, navController: NavController) {
+    private fun checkAndStoreUserInFirestore(
+        userId: String, name: String?, email: String?, navController: NavController
+    ) {
         val userRef = firestore.collection("Users").document(userId)
 
         userRef.get().addOnSuccessListener { document ->
             if (!document.exists()) {
                 // If user does not exist in Firestore, add them
-                val userData = UserDetails(name, "" , email)
+                val userData = UserDetails(name, "", email)
 
-                userRef.set(userData)
-                    .addOnSuccessListener {
+                userRef.set(userData).addOnSuccessListener {
                         Log.d("Firestore", "User added to Firestore")
                         //handler to delay intent
-                        @Suppress("DEPRECATION")
-                        Handler().postDelayed({
+                        @Suppress("DEPRECATION") Handler().postDelayed({
                             //navigating to home page
                             navController.navigate("homepage")
                         }, 2000)
-                    }
-                    .addOnFailureListener { e ->
+                    }.addOnFailureListener { e ->
                         Log.w("Firestore", "Error adding user", e)
                     }
             } else {
@@ -210,24 +198,23 @@ class MainActivity : ComponentActivity() {
     }
 
 
-
     // face login function
     fun performFacebookLogin(navController: NavController) {
         LoginManager.getInstance().logInWithReadPermissions(this, listOf("email", "public_profile"))
-        LoginManager.getInstance().registerCallback(callbackManager, object :
-            FacebookCallback<LoginResult> {
-            override fun onSuccess(result: LoginResult) {
-                handleFacebookAccessToken(result.accessToken, navController)
-            }
+        LoginManager.getInstance()
+            .registerCallback(callbackManager, object : FacebookCallback<LoginResult> {
+                override fun onSuccess(result: LoginResult) {
+                    handleFacebookAccessToken(result.accessToken, navController)
+                }
 
-            override fun onCancel() {
-                Log.d("FacebookLogin", "Facebook login cancelled")
-            }
+                override fun onCancel() {
+                    Log.d("FacebookLogin", "Facebook login cancelled")
+                }
 
-            override fun onError(error: FacebookException) {
-                Log.w("FacebookLogin", "Facebook login failed", error)
-            }
-        })
+                override fun onError(error: FacebookException) {
+                    Log.w("FacebookLogin", "Facebook login failed", error)
+                }
+            })
     }
 
 }
@@ -254,15 +241,21 @@ class MainActivity : ComponentActivity() {
 //    }
 
 
-
-
 @Composable
-fun SkyHigh(fusedLocationProviderClient: FusedLocationProviderClient, mainActivity: MainActivity, ebirdView: BirdViewModel, isDarkTheme: Boolean, onThemeChange: (Boolean) -> Unit, databaseHandle: DatabaseHandler, googleSignInLauncher: ActivityResultLauncher<Intent>) {
+fun SkyHigh(
+    fusedLocationProviderClient: FusedLocationProviderClient,
+    mainActivity: MainActivity,
+    ebirdView: BirdViewModel,
+    isDarkTheme: Boolean,
+    onThemeChange: (Boolean) -> Unit,
+    databaseHandle: DatabaseHandler,
+    googleSignInLauncher: ActivityResultLauncher<Intent>
+) {
     val rememberNav = rememberNavController()
 
     NavHost(navController = rememberNav, startDestination = "login") {
         composable("login") {
-            Login(rememberNav,databaseHandle, googleSignInLauncher)
+            Login(rememberNav, databaseHandle, googleSignInLauncher)
         }
         composable("register") {
             Register(rememberNav)
@@ -271,13 +264,21 @@ fun SkyHigh(fusedLocationProviderClient: FusedLocationProviderClient, mainActivi
             ForgotPassword(rememberNav)
         }
         composable("homepage") {
-            Main( mainActivity.mapboxViewModel,ebirdView, isDarkTheme, onThemeChange,databaseHandle,rememberNav) // Passes ViewModel to Main Composable
+            Main(
+                mainActivity.mapboxViewModel,
+                ebirdView,
+                isDarkTheme,
+                onThemeChange,
+                databaseHandle,
+                rememberNav
+            ) // Passes ViewModel to Main Composable
         }
-        composable("logout"){
+        composable("logout") {
             Logout(rememberNav)
         }
     }
 }
+
 
 // Composable function for splash screen
 @Composable
@@ -303,10 +304,28 @@ fun SplashScreen(navController: NavController) {
 
 // Composable function for navigation between splash and main login screen
 @Composable
-fun MyAppNavHost(fusedLocationProviderClient:FusedLocationProviderClient,navController: NavHostController,ebirdView: BirdViewModel,isDarkTheme: Boolean, onThemeChange: (Boolean) -> Unit, databaseHandle: DatabaseHandler, googleSignInLauncher: ActivityResultLauncher<Intent>) {
+fun MyAppNavHost(
+    fusedLocationProviderClient: FusedLocationProviderClient,
+    navController: NavHostController,
+    ebirdView: BirdViewModel,
+    isDarkTheme: Boolean,
+    onThemeChange: (Boolean) -> Unit,
+    databaseHandle: DatabaseHandler,
+    googleSignInLauncher: ActivityResultLauncher<Intent>
+) {
     NavHost(navController = navController, startDestination = "splash_screen") {
         composable("splash_screen") { SplashScreen(navController) }
-        composable("sky_high") { SkyHigh( fusedLocationProviderClient =  fusedLocationProviderClient,mainActivity = LocalContext.current as MainActivity,ebirdView,isDarkTheme, onThemeChange,databaseHandle, googleSignInLauncher) }
+        composable("sky_high") {
+            SkyHigh(
+                fusedLocationProviderClient = fusedLocationProviderClient,
+                mainActivity = LocalContext.current as MainActivity,
+                ebirdView,
+                isDarkTheme,
+                onThemeChange,
+                databaseHandle,
+                googleSignInLauncher
+            )
+        }
     }
 }
 
@@ -317,17 +336,20 @@ fun AnimatedLogo() {
 
     val alpha = animateFloatAsState(
         targetValue = if (animationPhase == 1) 0.5f else 1f,
-        animationSpec = tween(durationMillis = 2500), label = ""
+        animationSpec = tween(durationMillis = 2500),
+        label = ""
     )
 
     val scale = animateFloatAsState(
         targetValue = if (animationPhase == 1) 1.5f else 1f,
-        animationSpec = tween(durationMillis = 2500), label = ""
+        animationSpec = tween(durationMillis = 2500),
+        label = ""
     )
 
     val translationY = animateFloatAsState(
         targetValue = if (animationPhase == 1) 100f else 0f,
-        animationSpec = tween(durationMillis = 2500), label = ""
+        animationSpec = tween(durationMillis = 2500),
+        label = ""
     )
 
     Image(
@@ -374,8 +396,10 @@ fun updateAppLocale(context: Context, languageCode: String) {
     Locale.setDefault(locale)
     val config = Configuration(context.resources.configuration)
     config.setLocale(locale)
-    @Suppress("DEPRECATION")
-    context.resources.updateConfiguration(config, context.resources.displayMetrics)
+    @Suppress("DEPRECATION") context.resources.updateConfiguration(
+        config,
+        context.resources.displayMetrics
+    )
 
     // Forcefully recreate the current activity to apply the new locale
     if (context is Activity) {
