@@ -24,6 +24,7 @@ import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
@@ -50,9 +51,16 @@ class DatabaseHandler{
     }
 
     // Start Google Sign-In Intent
-    fun signInWithGoogle(activity: Activity, signInLauncher: ActivityResultLauncher<Intent>) {
+    fun signInWithGoogle(activity: Activity, signInLauncher: ActivityResultLauncher<Intent>,  onSuccess: () -> Unit,
+                         onError: (String) -> Unit) {
         val signInIntent = googleSignInClient.signInIntent
         signInLauncher.launch(signInIntent)
+        // Sign-in success
+        val user = FirebaseAuth.getInstance().currentUser
+        user?.let {
+            saveUserToDatabase(it) // Save user to your database
+            onSuccess() // Call success callback
+        }
     }
 
     // Handle Google Sign-In Result
@@ -78,6 +86,25 @@ class DatabaseHandler{
                 } else {
                     onError("Firebase authentication failed")
                 }
+            }
+    }
+
+    // Function to save user data to the database
+    private fun saveUserToDatabase(user: FirebaseUser) {
+        val userId = user.uid
+        val userName = user.displayName ?: "Anonymous"
+        val userEmail = user.email ?: ""
+
+        val userData = UserDetails(firstname = userName, lastname = "", email = userEmail, username = userName)
+
+        // Save user data in Firestore or your database
+        FirebaseFirestore.getInstance().collection("users").document(userId)
+            .set(userData)
+            .addOnSuccessListener {
+                // Data successfully written to the database
+            }
+            .addOnFailureListener { e ->
+                Log.w("DatabaseError", "Error adding user to database", e)
             }
     }
     fun Login(email: String,password: String,context: Context, navController: NavController ,onSuccess: () -> Unit,onError: (String) -> Unit){
